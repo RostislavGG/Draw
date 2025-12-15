@@ -1,72 +1,15 @@
-import { Shape, Modes, BaseShape } from "../types";
+import { v4 as uuidv4 } from "uuid";
 
-export const shapeBuilder = (
-  shape: Shape | null,
-  mode: Modes,
-  x: number,
-  y: number,
-): Shape => {
-  let currentShape = shape;
+import { Shape } from "../shapes/base";
+import { Freehand } from "../shapes/freehand";
+import { Rectangle } from "../shapes/rectangle";
 
-  if (!currentShape) {
-    currentShape = buildInitialShape(mode, x, y);
-  }
+import { Modes } from "../types";
 
-  switch (currentShape.type) {
-    case Modes.Freehand:
-      currentShape.points = [...currentShape.points, [x, y]];
-      break;
-    case Modes.Rectangle:
-      currentShape.width = x - currentShape.x;
-      currentShape.height = y - currentShape.y;
-      break;
-    case Modes.Line:
-      currentShape.endX = x;
-      currentShape.endY = y;
-      break;
-  }
+export const createShape = (mode: Modes, x: number, y: number): Shape => {
+    if (mode === Modes.Freehand) {
+        return new Freehand(uuidv4(), x, y, 8, "#ff0000");
+    }
 
-  return currentShape;
-};
-
-const buildInitialShape = (mode: Modes, x: number, y: number): Shape => {
-  const base: BaseShape = {
-    id: "",
-    type: mode,
-    x,
-    y,
-  };
-
-  let final;
-  switch (mode) {
-    case Modes.Freehand:
-      final = {
-        ...base,
-        strokeColor: "#ff0000",
-        points: [],
-      };
-      break;
-    case Modes.Rectangle:
-      final = {
-        ...base,
-        width: 0,
-        height: 0,
-      };
-    case Modes.Line:
-      final = {
-        ...base,
-        endX: x,
-        endY: y,
-      };
-      break;
-    case Modes.Typography:
-      final = {
-        ...base,
-        fontSize: 12,
-        text: "",
-      };
-      break;
-  }
-
-  return final as Shape;
+    return new Rectangle(uuidv4(), x, y, 4, "#ffff00");
 };

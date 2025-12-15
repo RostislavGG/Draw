@@ -1,114 +1,141 @@
 import React from "react";
 
-import { drawShape } from "./utils/drawing";
-import { Modes, Shape } from "./types";
-import { shapeBuilder } from "./utils/shapes";
+import { createShape } from "./utils/shapes";
+import { deriveMode } from "./utils/mode";
+import { redraw } from "./utils/drawing";
+
+import { ModeIdentifier } from "./components/ModeIdentifier";
+
+import { Modes } from "./types";
+import { Shape } from "./shapes/base";
 
 function App() {
-  const canvasRef = React.useRef<HTMLCanvasElement>(null);
-  const isMouseDown = React.useRef(false);
-  const currentShape = React.useRef<Shape>(null);
-  const shapesList = React.useRef<Shape[]>([]);
-  const currentMode = React.useRef<Modes>(Modes.Freehand);
+    const canvasRef = React.useRef<HTMLCanvasElement>(null);
 
-  const [isFocused, setIsFocused] = React.useState(true);
+    const [isFocused, setIsFocused] = React.useState(true);
+    const [mode, setMode] = React.useState<Modes>(Modes.Freehand);
 
-  React.useEffect(() => {
-    window.api.onStartDrawing(() => setIsFocused(true));
-  }, []);
+    const isMouseDown = React.useRef(false);
 
-  window.onkeydown = (event: KeyboardEvent) => {
-    if (event.key === "Escape") {
-      window.api.stopDrawing();
-      clearBoard();
-      shapesList.current = [];
-      return;
-    }
+    const tempShape = React.useRef<Shape>(null);
+    const shapesList = React.useRef<Shape[]>([]);
+    const hoveredShape = React.useRef<Shape | null>(null);
 
-    if (event.key === "z" && event.ctrlKey) {
-      if (shapesList.current.length === 0) {
-        return;
-      }
+    React.useEffect(() => {
+        window.api.onStartDrawing(() => setIsFocused(true));
+    }, []);
 
-      if (!canvasRef.current) {
-        return;
-      }
+    window.onkeydown = (event: KeyboardEvent) => {
+        if (event.key === "Escape") {
+            window.api.stopDrawing();
+            shapesList.current = [];
 
-      shapesList.current = shapesList.current.slice(
-        0,
-        shapesList.current.length - 1,
-      );
+            if (!canvasRef.current) {
+                return;
+            }
 
-      redraw();
-    }
-  };
+            redraw(canvasRef.current, shapesList.current, tempShape.current);
+            return;
+        }
 
-  const handleMouseDown = () => {
-    isMouseDown.current = true;
-  };
+        const derivedMode = deriveMode(event.key);
+        if (derivedMode !== null) {
+            setMode(derivedMode);
+            return;
+        }
 
-  const handleMouseUp = () => {
-    isMouseDown.current = false;
+        if (event.key === "z" && event.ctrlKey) {
+            if (shapesList.current.length === 0) {
+                return;
+            }
 
-    if (currentShape.current === null) {
-      return;
-    }
+            if (!canvasRef.current) {
+                return;
+            }
 
-    shapesList.current = [...shapesList.current, currentShape.current];
-    currentShape.current = null;
-    redraw();
-  };
+            shapesList.current = shapesList.current.slice(
+                0,
+                shapesList.current.length - 1,
+            );
 
-  const redraw = () => {
-    if (!canvasRef.current) {
-      return;
-    }
+            redraw(canvasRef.current, shapesList.current, tempShape.current);
+        }
+    };
 
-    clearBoard();
+    const handleMouseDown = () => {
+        isMouseDown.current = true;
+    };
 
-    shapesList.current.forEach((shape) => drawShape(canvasRef.current!, shape));
+    const handleMouseUp = () => {
+        isMouseDown.current = false;
 
-    if (currentShape.current) {
-      drawShape(canvasRef.current, currentShape.current);
-    }
-  };
+        if (tempShape.current === null) {
+            return;
+        }
 
-  const handleMouseMove = (event: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!isMouseDown.current || !canvasRef.current || !isFocused) {
-      return;
-    }
+        shapesList.current = [...shapesList.current, tempShape.current];
+        tempShape.current = null;
 
-    currentShape.current = shapeBuilder(
-      currentShape.current,
-      currentMode.current,
-      event.clientX,
-      event.clientY,
+        if (!canvasRef.current) {
+            return;
+        }
+        redraw(canvasRef.current, shapesList.current, tempShape.current);
+    };
+
+    const handleMouseMove = (event: React.MouseEvent<HTMLCanvasElement>) => {
+        if (!canvasRef.current || !isFocused) {
+            return;
+        }
+
+        if (mode === Modes.Select) {
+            for (let i = shapesList.current.length - 1; i >= 0; i--) {
+                if (shapesList.current[i].hitTest(event.clientX, event.clientY, canvasRef.current)) {
+                    hoveredShape.current = shapesList.current[i];
+                    return;
+                }
+            }
+            hoveredShape.current = null;
+            // hoveredShape.current = shapesList.current.reverse().find(s => s.hitTest(event.clientX, event.clientY, canvasRef.current!)) ?? null;
+            return;
+        }
+
+        if (!isMouseDown.current) {
+            return;
+        }
+
+        if (tempShape.current) {
+            tempShape.current.updateShape(event.clientX, event.clientY)
+        } else {
+            tempShape.current = createShape(mode, event.clientX, event.clientY);
+        }
+
+        redraw(canvasRef.current, shapesList.current, tempShape.current);
+    };
+
+    const onMouseClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
+        if (!canvasRef.current) {
+            return;
+        }
+
+
+        console.log(123, hoveredShape.current)
+    };
+
+    return (
+        <React.Fragment>
+            <canvas
+                style={{ background: "transparent" }}
+                ref={canvasRef}
+                height={window.innerHeight}
+                width={window.innerWidth}
+                onClick={onMouseClick}
+                onMouseDown={handleMouseDown}
+                onMouseUp={handleMouseUp}
+                onMouseMove={handleMouseMove}
+            ></canvas>
+            <ModeIdentifier mode={mode} />
+        </React.Fragment>
     );
-
-    redraw();
-  };
-
-  const clearBoard = () => {
-    if (!canvasRef.current) {
-      return;
-    }
-
-    const ctx = canvasRef.current.getContext("2d");
-    const bb = canvasRef.current.getBoundingClientRect();
-    ctx?.clearRect(0, 0, bb.width, bb.height);
-  };
-
-  return (
-    <canvas
-      style={{ background: "transparent" }}
-      ref={canvasRef}
-      height={window.innerHeight}
-      width={window.innerWidth}
-      onMouseDown={handleMouseDown}
-      onMouseUp={handleMouseUp}
-      onMouseMove={handleMouseMove}
-    ></canvas>
-  );
 }
 
 export default App;
