@@ -86,16 +86,27 @@ electron_1.app.whenReady().then(() => {
         if (!mainWindow) {
             return;
         }
-        const screenshot = await (0, screenCapture_1.captureNearestDisplayAsDataUrl)();
         if (isDrawing) {
             return;
         }
+        const screenshot = await (0, screenCapture_1.captureNearestDisplayAsDataUrl)();
+        const display = electron_1.screen.getDisplayNearestPoint(electron_1.screen.getCursorScreenPoint());
+        const { bounds, workArea } = display;
+        const insets = {
+            left: workArea.x - bounds.x,
+            top: workArea.y - bounds.y,
+            right: bounds.x + bounds.width - (workArea.x + workArea.width),
+            bottom: bounds.y + bounds.height - (workArea.y + workArea.height),
+        };
         isDrawing = true;
         mainWindow.setFocusable(true);
         mainWindow.setIgnoreMouseEvents(false);
         mainWindow.show();
         mainWindow.focus();
-        mainWindow.webContents.send("start-drawing", screenshot);
+        mainWindow.webContents.send("start-drawing", {
+            ...screenshot,
+            insets,
+        });
     });
 });
 electron_1.app.on("window-all-closed", () => {

@@ -4,4 +4,5 @@ export type BackgroundImage = {
     height: number;
     displayId: number;
     scaleFactor: number;
+    insets: { left: number; top: number; right: number; bottom: number };
 };

@@ -5,7 +5,7 @@ import { BackgroundImage } from "../electron/types";
 import { createShape } from "./utils/shapes";
 import { deriveMode } from "./utils/mode";
 import { redraw } from "./utils/drawing";
-import { Transformer } from "./utils/canvas";
+import { clampToBackground, screenToWorld, Transformer, ViewInsets } from "./utils/canvas";
 
 import { ModeIdentifier } from "./components/ModeIdentifier";
 
@@ -28,6 +28,7 @@ function App() {
 
     const backgroundBitmap = React.useRef<ImageBitmap | null>(null);
     const backgroundSize = React.useRef<{ width: number, height: number } | null>(null);
+    const viewInsets = React.useRef<ViewInsets>({ left: 0, top: 0, right: 0, bottom: 0 });
 
     const viewportTransform = React.useRef<Transformer>({ scale: 1, x: 0, y: 0 })
     const panStart = React.useRef<{ x: number, y: number, camX: number, camY: number } | null>(null)
@@ -35,6 +36,8 @@ function App() {
     React.useEffect(() => {
         window.api.onStartDrawing(async (payload: BackgroundImage) => {
             setIsFocused(true)
+
+            viewInsets.current = payload.insets ?? { left: 0, top: 0, right: 0, bottom: 0 };
 
             const blob = dataUrlToBlob(payload.dataUrl)
             const bitmap = await createImageBitmap(blob);
@@ -46,6 +49,7 @@ function App() {
                 return;
             }
 
+            clampViewport();
             requestRedraw()
         });
     }, []);
@@ -61,6 +65,7 @@ function App() {
 
             backgroundBitmap.current = null;
             backgroundSize.current = null;
+            viewportTransform.current = { scale: 1, x: 0, y: 0 }
             setMode(null)
 
             requestRedraw()
@@ -91,15 +96,19 @@ function App() {
         }
     };
 
+    const clampViewport = () => {
+        if (!canvasRef.current || !backgroundSize.current) return;
+        clampToBackground(viewportTransform.current, canvasRef.current, backgroundSize.current, viewInsets.current);
+    };
+
     const requestRedraw = () => {
         if (rafId.current != null) return;
         rafId.current = requestAnimationFrame(() => {
             rafId.current = null;
             if (!canvasRef.current) return;
-            redraw(canvasRef.current, shapesList.current, tempShape.current, backgroundBitmap.current, backgroundSize.current);
+            redraw(canvasRef.current, viewportTransform.current, shapesList.current, tempShape.current, backgroundBitmap.current, backgroundSize.current);
         });
     };
-
 
     const handleMouseDown = (event: React.MouseEvent<HTMLCanvasElement>) => {
         isMouseDown.current = true;
@@ -133,11 +142,19 @@ function App() {
             return;
         }
 
-        if (mode === Modes.Select) {
+        const { x, y } = screenToWorld(viewportTransform.current, event.clientX, event.clientY);
 
+        if (mode === Modes.Select) {
+            if (isMouseDown.current && panStart.current) {
+                viewportTransform.current.x = panStart.current.camX + (event.clientX - panStart.current.x)
+                viewportTransform.current.y = panStart.current.camY + (event.clientY - panStart.current.y)
+
+                clampViewport();
+                requestRedraw();
+            }
 
             for (let i = shapesList.current.length - 1; i >= 0; i--) {
-                if (shapesList.current[i].hitTest(event.clientX, event.clientY, canvasRef.current)) {
+                if (shapesList.current[i].hitTest(x, y, canvasRef.current)) {
                     hoveredShape.current = shapesList.current[i];
                     return;
                 }
@@ -151,9 +168,9 @@ function App() {
         }
 
         if (tempShape.current) {
-            tempShape.current.updateShape(event.clientX, event.clientY)
+            tempShape.current.updateShape(x, y)
         } else {
-            tempShape.current = createShape(mode, event.clientX, event.clientY);
+            tempShape.current = createShape(mode, x, y);
         }
 
         requestRedraw()
@@ -170,6 +187,34 @@ function App() {
         // }
     };
 
+    const handleMouseWheel = (event: React.WheelEvent<HTMLCanvasElement>) => {
+        if (mode !== Modes.Select) {
+            return;
+        }
+
+        event.preventDefault();
+
+        const MIN_SCALE = 1;
+        const MAX_SCALE = 6;
+
+        const zoom = Math.exp(-event.deltaY * 0.001);
+        const oldScale = viewportTransform.current.scale;
+        const unclamped = oldScale * zoom;
+        const newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, unclamped));
+
+        if (newScale === oldScale) return;
+
+        const wx = (event.clientX - viewportTransform.current.x) / oldScale;
+        const wy = (event.clientY - viewportTransform.current.y) / oldScale;
+
+        viewportTransform.current.x = event.clientX - wx * newScale;
+        viewportTransform.current.y = event.clientY - wy * newScale;
+        viewportTransform.current.scale = newScale;
+
+        clampViewport();
+        requestRedraw();
+    }
+
     return (
         <React.Fragment>
             <canvas
@@ -181,6 +226,7 @@ function App() {
                 onMouseDown={handleMouseDown}
                 onMouseUp={handleMouseUp}
                 onMouseMove={handleMouseMove}
+                onWheel={handleMouseWheel}
             ></canvas>
             {mode !== null && <ModeIdentifier mode={mode} />}
         </React.Fragment>

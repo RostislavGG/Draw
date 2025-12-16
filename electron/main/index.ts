@@ -1,4 +1,4 @@
-import { app, BrowserWindow, globalShortcut, ipcMain } from "electron";
+import { app, BrowserWindow, globalShortcut, ipcMain, screen } from "electron";
 import * as path from "node:path";
 
 import { captureNearestDisplayAsDataUrl } from "./screenCapture";
@@ -65,11 +65,23 @@ app.whenReady().then(() => {
             return;
         }
 
-        const screenshot = await captureNearestDisplayAsDataUrl();
-
         if (isDrawing) {
             return;
         }
+
+        const screenshot = await captureNearestDisplayAsDataUrl();
+
+        const display = screen.getDisplayNearestPoint(
+            screen.getCursorScreenPoint()
+        );
+        const { bounds, workArea } = display;
+
+        const insets = {
+            left: workArea.x - bounds.x,
+            top: workArea.y - bounds.y,
+            right: bounds.x + bounds.width - (workArea.x + workArea.width),
+            bottom: bounds.y + bounds.height - (workArea.y + workArea.height),
+        };
 
         isDrawing = true;
 
@@ -78,7 +90,10 @@ app.whenReady().then(() => {
         mainWindow.show();
         mainWindow.focus();
 
-        mainWindow.webContents.send("start-drawing", screenshot);
+        mainWindow.webContents.send("start-drawing", {
+            ...screenshot,
+            insets,
+        });
     });
 });
 
