@@ -1,10 +1,10 @@
 export {};
 
 declare global {
-  interface Window {
-    api: {
-      stopDrawing(): void;
-      onStartDrawing: (cb: () => void) => void;
-    };
-  }
+    interface Window {
+        api: {
+            stopDrawing(): void;
+            onStartDrawing: (cb: (_, payload) => void) => void;
+        };
+    }
 }

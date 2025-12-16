@@ -5,29 +5,29 @@ import { Modes } from "../types";
 import "./styles.css";
 
 export const ModeIdentifier = React.memo((props: { mode: Modes }) => {
-  const getModeString = () => {
-    const STRINGS = {
-      [Modes.Rectangle]: "Rectangle Mode",
-      [Modes.Freehand]: "Freehand Mode",
-      [Modes.Line]: "Line Mode",
-      [Modes.Typography]: "TextMode",
-      [Modes.Arrow]: "Arrow Mode",
-      [Modes.Elipse]: "Elipse Mode",
-      [Modes.Select]: "Select Mode",
+    const getModeString = () => {
+        const STRINGS = {
+            [Modes.Rectangle]: "Rectangle Mode",
+            [Modes.Freehand]: "Freehand Mode",
+            [Modes.Line]: "Line Mode",
+            [Modes.Typography]: "TextMode",
+            [Modes.Arrow]: "Arrow Mode",
+            [Modes.Elipse]: "Elipse Mode",
+            [Modes.Select]: "Select Mode",
+        };
+
+        return STRINGS[props.mode] ?? "";
     };
 
-    return STRINGS[props.mode] ?? "";
-  };
+    const text = getModeString();
 
-  const text = getModeString();
+    if (text === "") {
+        return;
+    }
 
-  if (text === "") {
-    return;
-  }
-
-  return (
-    <div className="modeContainer">
-      <h1>{text}</h1>
-    </div>
-  );
+    return (
+        <div className="modeContainer">
+            <h1>{text}</h1>
+        </div>
+    );
 });

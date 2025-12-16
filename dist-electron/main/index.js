@@ -35,6 +35,7 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 const electron_1 = require("electron");
 const path = __importStar(require("node:path"));
+const screenCapture_1 = require("./screenCapture");
 const isDev = process.env.NODE_ENV === "development";
 let mainWindow = null;
 let isDrawing = false;
@@ -46,7 +47,7 @@ const FULL_SCREEN_OPTIONS = {
     alwaysOnTop: true,
     hasShadow: false,
     resizable: false,
-    fullscreen: true, // if you want full-screen overlay
+    fullscreen: true,
     backgroundColor: "#00000000",
 };
 const NORMAL_OPTIONS = {
@@ -56,18 +57,18 @@ const NORMAL_OPTIONS = {
 };
 const createWindow = () => {
     mainWindow = new electron_1.BrowserWindow({
+        ...FULL_SCREEN_OPTIONS,
         webPreferences: {
-            ...NORMAL_OPTIONS,
             preload: path.join(__dirname, "..", "preload", "index.js"),
             contextIsolation: true,
             nodeIntegration: false,
         },
     });
-    // mainWindow.setIgnoreMouseEvents(true, { forward: true });
+    mainWindow.setIgnoreMouseEvents(true, { forward: true });
     mainWindow.maximize();
     if (isDev) {
         mainWindow.loadURL("http://localhost:5173/");
-        mainWindow.webContents.openDevTools();
+        //mainWindow.webContents.openDevTools();
     }
     else {
         mainWindow.loadFile(path.join(__dirname, "..", "..", "dist", "index.html"));
@@ -81,33 +82,32 @@ electron_1.app.whenReady().then(() => {
             createWindow();
         }
     });
-    // globalShortcut.register("CommandOrControl+Alt+D", () => {
-    //   if (!mainWindow) {
-    //     return;
-    //   }
-    //
-    //   if (isDrawing) {
-    //     return;
-    //   }
-    //
-    //   console.log("Start Drawing");
-    //   mainWindow.focus();
-    //
-    //   isDrawing = true;
-    //   mainWindow.setIgnoreMouseEvents(false);
-    //   mainWindow.webContents.send("start-drawing");
-    // });
+    electron_1.globalShortcut.register("CommandOrControl+Alt+D", async () => {
+        if (!mainWindow) {
+            return;
+        }
+        const screenshot = await (0, screenCapture_1.captureNearestDisplayAsDataUrl)();
+        if (isDrawing) {
+            return;
+        }
+        isDrawing = true;
+        mainWindow.setFocusable(true);
+        mainWindow.setIgnoreMouseEvents(false);
+        mainWindow.show();
+        mainWindow.focus();
+        mainWindow.webContents.send("start-drawing", screenshot);
+    });
 });
 electron_1.app.on("window-all-closed", () => {
     if (process.platform !== "darwin") {
         electron_1.app.quit();
     }
 });
-// ipcMain.on("stop-drawing", () => {
-//   if (!mainWindow) return;
-//   console.log("Stop Drawing");
-//
-//   isDrawing = false;
-//
-//   mainWindow.setIgnoreMouseEvents(true, { forward: true });
-// });
+electron_1.ipcMain.on("stop-drawing", () => {
+    if (!mainWindow)
+        return;
+    isDrawing = false;
+    mainWindow.setIgnoreMouseEvents(true, { forward: true });
+    mainWindow.setFocusable(false);
+    mainWindow.blur();
+});
