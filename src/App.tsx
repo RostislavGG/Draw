@@ -1,20 +1,20 @@
 import React from "react";
 
-import { BackgroundImage } from "../electron/types";
+import { Insets } from "../electron/types";
 
 import { createShape, createTextShape } from "./utils/shapes";
 import { deriveMode } from "./utils/mode";
 import { redraw } from "./utils/drawing";
 import { clampToBackground, screenToWorld, Transformer, ViewInsets } from "./utils/canvas";
-import { dataUrlToBlob } from "./utils/image";
-
-import { Shape } from "./shapes/base";
+import { captureImage, stopCapture } from "./utils/screenshot";
 
 import { ModeIdentifier } from "./components/mode-identifier";
 import { Instruments } from "./components/instruments";
 import { TextEditor } from "./components/text-editing";
 
 import { Modes } from "./types";
+
+import { Shape } from "./shapes/base";
 
 function App() {
     const canvasRef = React.useRef<HTMLCanvasElement>(null);
@@ -41,34 +41,31 @@ function App() {
     const panStart = React.useRef<{ x: number, y: number, camX: number, camY: number } | null>(null)
 
     React.useEffect(() => {
-        window.api.onStartDrawing(async (payload: BackgroundImage) => {
-            setIsFocused(true)
-
+        return window.api.onStartDrawing(async (payload: { insets: Insets, sourceId: string }) => {
+            canvasRef.current!.style.cursor = "none"
             viewInsets.current = payload.insets ?? { left: 0, top: 0, right: 0, bottom: 0 };
-
-            const blob = dataUrlToBlob(payload.dataUrl)
-
-            const bitmap = await createImageBitmap(blob);
-
-            backgroundBitmap.current = bitmap;
-            backgroundSize.current = { width: payload.width, height: payload.height };
-
-            if (!canvasRef.current) {
-                return;
-            }
 
             clampViewport();
             requestRedraw();
-        });
+
+            const bitmap = await captureImage(payload.sourceId);
+            canvasRef.current!.style.cursor = "auto"
+
+            backgroundBitmap.current = bitmap;
+            backgroundSize.current = { width: bitmap.width, height: bitmap.height };
+            setIsFocused(true)
+        })
     }, []);
 
     React.useEffect(() => {
         window.onkeydown = (event: KeyboardEvent) => {
-            if (textEditingLocation) {
-                return;
-            }
-
             if (event.key === "Escape") {
+                if (textEditingLocation) {
+                    resetTextEditingLocation()
+                    return;
+                }
+
+                stopCapture();
                 window.api.stopDrawing();
                 setIsFocused(false)
                 shapesList.current = [];
@@ -269,7 +266,7 @@ function App() {
             ></canvas>
             {isFocused && mode !== null && <ModeIdentifier mode={mode} />}
             {isFocused && <Instruments shape={selectedShape} />}
-            {isFocused && textEditingLocation && <TextEditor anchor={textEditingLocation} initialText="" transform={viewportTransform.current} commit={commitText} cancel={resetTextEditingLocation} />}
+            {isFocused && textEditingLocation && <TextEditor key={textEditingLocation.key} anchor={textEditingLocation} initialText="" transform={viewportTransform.current} commit={commitText} cancel={resetTextEditingLocation} />}
         </React.Fragment>
     );
 }

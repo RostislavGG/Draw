@@ -1,7 +1,12 @@
-import { app, BrowserWindow, globalShortcut, ipcMain, screen } from "electron";
+import {
+    app,
+    BrowserWindow,
+    desktopCapturer,
+    globalShortcut,
+    ipcMain,
+    screen,
+} from "electron";
 import * as path from "node:path";
-
-import { captureNearestDisplayAsDataUrl } from "./screenCapture";
 
 const isDev = process.env.NODE_ENV === "development";
 
@@ -69,8 +74,6 @@ app.whenReady().then(() => {
             return;
         }
 
-        const screenshot = await captureNearestDisplayAsDataUrl();
-
         const display = screen.getDisplayNearestPoint(
             screen.getCursorScreenPoint()
         );
@@ -85,14 +88,23 @@ app.whenReady().then(() => {
 
         isDrawing = true;
 
+        const sources = await desktopCapturer.getSources({
+            types: ["screen"],
+            thumbnailSize: { width: 0, height: 0 },
+        });
+
+        const source =
+            sources.find((s) => s.display_id === String(display.id)) ??
+            sources[0];
+
         mainWindow.setFocusable(true);
         mainWindow.setIgnoreMouseEvents(false);
         mainWindow.show();
         mainWindow.focus();
 
         mainWindow.webContents.send("start-drawing", {
-            ...screenshot,
             insets,
+            sourceId: source.id,
         });
     });
 });

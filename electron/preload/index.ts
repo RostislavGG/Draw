@@ -1,10 +1,14 @@
 import { contextBridge, ipcRenderer } from "electron";
+import { Insets } from "../types";
 
-import { BackgroundImage } from "../types";
+type StartDrawingPayload = { insets: Insets; sourceId: string };
 
 contextBridge.exposeInMainWorld("api", {
-    onStartDrawing: (cb: (payload: BackgroundImage) => void) => {
-        ipcRenderer.on("start-drawing", (_, payload) => cb(payload));
+    onStartDrawing: (cb: (payload: StartDrawingPayload) => void) => {
+        const handler = (_: unknown, payload: StartDrawingPayload) =>
+            cb(payload);
+        ipcRenderer.on("start-drawing", handler);
+        return () => ipcRenderer.removeListener("start-drawing", handler);
     },
     stopDrawing: () => {
         ipcRenderer.send("stop-drawing");
