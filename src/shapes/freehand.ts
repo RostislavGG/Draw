@@ -55,7 +55,7 @@ export class Freehand extends Shape {
         this.path = path;
         ctx.beginPath();
         ctx.fillStyle = this.strokeColor;
-        ctx?.fill(path);
+        ctx.fill(path);
     }
 
     hitTest(x: number, y: number, canvas: HTMLCanvasElement): boolean {
@@ -68,7 +68,7 @@ export class Freehand extends Shape {
             return false;
         }
 
-        return ctx.isPointInStroke(this.path, x, y);
+        return ctx.isPointInPath(this.path, x, y);
     }
 
     updateShape(x: number, y: number): void {
