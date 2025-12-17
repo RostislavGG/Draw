@@ -142,6 +142,8 @@ function App() {
             return;
         }
 
+        canvasRef.current.style.cursor = "default"
+
         const { x, y } = screenToWorld(viewportTransform.current, event.clientX, event.clientY);
 
         if (mode === Modes.Select) {
@@ -155,6 +157,7 @@ function App() {
 
             for (let i = shapesList.current.length - 1; i >= 0; i--) {
                 if (shapesList.current[i].hitTest(x, y, canvasRef.current)) {
+                    canvasRef.current.style.cursor = "pointer"
                     hoveredShape.current = shapesList.current[i];
                     return;
                 }

@@ -68,7 +68,7 @@ export class Freehand extends Shape {
             return false;
         }
 
-        return ctx.isPointInPath(this.path, x, y);
+        return ctx.isPointInStroke(this.path, x, y);
     }
 
     updateShape(x: number, y: number): void {

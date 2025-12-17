@@ -37,10 +37,10 @@ export class Rectangle extends Shape {
 
     hitTest(x: number, y: number, _: HTMLCanvasElement): boolean {
         return (
-            x < Math.max(this.x0, this.x1) &&
-            x > Math.min(this.x0, this.x1) &&
-            y < Math.max(this.y0, this.y1) &&
-            y > Math.min(this.y0, this.y1)
+            x < Math.max(this.x0, this.x1) + this.strokeWidth / 2 &&
+            x > Math.min(this.x0, this.x1) - this.strokeWidth / 2 &&
+            y < Math.max(this.y0, this.y1) + this.strokeWidth / 2 &&
+            y > Math.min(this.y0, this.y1) - this.strokeWidth / 2
         );
     }
 
