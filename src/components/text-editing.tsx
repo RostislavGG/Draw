@@ -17,10 +17,8 @@ export const TextEditor = (props: Props) => {
     const ref = React.useRef<HTMLTextAreaElement>(null)
 
     React.useEffect(() => {
-        setTimeout(() => {
-            ref.current?.focus();
-            ref.current?.select();
-        }, 50)
+        ref.current?.focus();
+        ref.current?.select();
     }, [])
 
     const handleTextChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {

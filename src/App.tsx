@@ -6,14 +6,15 @@ import { createShape, createTextShape } from "./utils/shapes";
 import { deriveMode } from "./utils/mode";
 import { redraw } from "./utils/drawing";
 import { clampToBackground, screenToWorld, Transformer, ViewInsets } from "./utils/canvas";
+import { dataUrlToBlob } from "./utils/image";
 
-import { ModeIdentifier } from "./components/ModeIdentifier";
+import { Shape } from "./shapes/base";
+
+import { ModeIdentifier } from "./components/mode-identifier";
+import { Instruments } from "./components/instruments";
+import { TextEditor } from "./components/text-editing";
 
 import { Modes } from "./types";
-import { Shape } from "./shapes/base";
-import { dataUrlToBlob } from "./utils/image";
-import { Instruments } from "./components/instruments";
-import { TextEditor } from "./components/textEditing";
 
 function App() {
     const canvasRef = React.useRef<HTMLCanvasElement>(null);
@@ -21,6 +22,7 @@ function App() {
     const [isFocused, setIsFocused] = React.useState(false);
     const [mode, setMode] = React.useState<Modes>(Modes.Select);
     const [textEditingLocation, setTextEditingLocation] = React.useState<{ x: number, y: number, key: number } | null>(null);
+    const textEditExitTime = React.useRef(Date.now())
 
     const isMouseDown = React.useRef(false);
     const rafId = React.useRef<number | null>(null)
@@ -124,14 +126,6 @@ function App() {
     };
 
     const handleMouseDown = (event: React.MouseEvent<HTMLCanvasElement>) => {
-        if (mode === Modes.Typography) {
-            if (textEditingLocation) {
-                return;
-            }
-            setTextEditingLocation({ x: event.clientX, y: event.clientY, key: Math.random() });
-            return;
-        }
-
         isMouseDown.current = true;
         panStart.current = {
             x: event.clientX, y: event.clientY, camX: viewportTransform.current.x, camY: viewportTransform.current.y
@@ -201,7 +195,15 @@ function App() {
     };
 
     const onMouseClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
-        if (!canvasRef.current || mode === Modes.Typography) {
+        if (!canvasRef.current) {
+            return;
+        }
+
+        if (mode === Modes.Typography) {
+            if (textEditingLocation || Date.now() - textEditExitTime.current < 200) {
+                return;
+            }
+            setTextEditingLocation({ x: event.clientX, y: event.clientY, key: Math.random() });
             return;
         }
 
@@ -240,6 +242,7 @@ function App() {
 
     const resetTextEditingLocation = () => setTextEditingLocation(null);
     const commitText = (text: string) => {
+        textEditExitTime.current = Date.now();
         if (text.trim().length === 0 || !textEditingLocation) {
             resetTextEditingLocation();
             return;
