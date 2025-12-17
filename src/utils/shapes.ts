@@ -5,6 +5,7 @@ import { Freehand } from "../shapes/freehand";
 import { Rectangle } from "../shapes/rectangle";
 import { Line } from "../shapes/line";
 import { Arrow } from "../shapes/arrow";
+import { Elipse } from "../shapes/elipse";
 
 import { Modes } from "../types";
 import { Typography } from "../shapes/typography";
@@ -20,6 +21,10 @@ export const createShape = (mode: Modes, x: number, y: number): Shape => {
 
     if (mode === Modes.Arrow) {
         return new Arrow(uuidv4(), x, y, 8, "#ff00ff");
+    }
+
+    if (mode === Modes.Elipse) {
+        return new Elipse(uuidv4(), x, y, 8, "#0f11ff");
     }
 
     return new Rectangle(uuidv4(), x, y, 4, "#ffff00");
