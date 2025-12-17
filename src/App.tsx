@@ -2,7 +2,7 @@ import React from "react";
 
 import { BackgroundImage } from "../electron/types";
 
-import { createShape } from "./utils/shapes";
+import { createShape, createTextShape } from "./utils/shapes";
 import { deriveMode } from "./utils/mode";
 import { redraw } from "./utils/drawing";
 import { clampToBackground, screenToWorld, Transformer, ViewInsets } from "./utils/canvas";
@@ -13,12 +13,14 @@ import { Modes } from "./types";
 import { Shape } from "./shapes/base";
 import { dataUrlToBlob } from "./utils/image";
 import { Instruments } from "./components/instruments";
+import { TextEditor } from "./components/textEditing";
 
 function App() {
     const canvasRef = React.useRef<HTMLCanvasElement>(null);
 
-    const [isFocused, setIsFocused] = React.useState(true);
-    const [mode, setMode] = React.useState<Modes | null>(null);
+    const [isFocused, setIsFocused] = React.useState(false);
+    const [mode, setMode] = React.useState<Modes>(Modes.Select);
+    const [textEditingLocation, setTextEditingLocation] = React.useState<{ x: number, y: number, key: number } | null>(null);
 
     const isMouseDown = React.useRef(false);
     const rafId = React.useRef<number | null>(null)
@@ -43,6 +45,7 @@ function App() {
             viewInsets.current = payload.insets ?? { left: 0, top: 0, right: 0, bottom: 0 };
 
             const blob = dataUrlToBlob(payload.dataUrl)
+
             const bitmap = await createImageBitmap(blob);
 
             backgroundBitmap.current = bitmap;
@@ -53,52 +56,58 @@ function App() {
             }
 
             clampViewport();
-            requestRedraw()
+            requestRedraw();
         });
     }, []);
 
-    window.onkeydown = (event: KeyboardEvent) => {
-        if (event.key === "Escape") {
-            window.api.stopDrawing();
-            setIsFocused(false)
-            shapesList.current = [];
-
-            if (!canvasRef.current) {
+    React.useEffect(() => {
+        window.onkeydown = (event: KeyboardEvent) => {
+            if (textEditingLocation) {
                 return;
             }
 
-            backgroundBitmap.current = null;
-            backgroundSize.current = null;
-            viewportTransform.current = { scale: 1, x: 0, y: 0 }
-            setMode(null)
+            if (event.key === "Escape") {
+                window.api.stopDrawing();
+                setIsFocused(false)
+                shapesList.current = [];
 
-            requestRedraw()
-            return;
-        }
+                if (!canvasRef.current) {
+                    return;
+                }
 
-        const derivedMode = deriveMode(event.key);
-        if (derivedMode !== null) {
-            setMode(derivedMode);
-            return;
-        }
+                backgroundBitmap.current = null;
+                backgroundSize.current = null;
+                viewportTransform.current = { scale: 1, x: 0, y: 0 }
+                setMode(Modes.Select)
 
-        if (event.key === "z" && event.ctrlKey) {
-            if (shapesList.current.length === 0) {
+                requestRedraw()
                 return;
             }
 
-            if (!canvasRef.current) {
+            const derivedMode = deriveMode(event.key);
+            if (derivedMode !== null) {
+                setMode(derivedMode);
                 return;
             }
 
-            shapesList.current = shapesList.current.slice(
-                0,
-                shapesList.current.length - 1,
-            );
+            if (event.key === "z" && event.ctrlKey) {
+                if (shapesList.current.length === 0) {
+                    return;
+                }
 
-            requestRedraw();
-        }
-    };
+                if (!canvasRef.current) {
+                    return;
+                }
+
+                shapesList.current = shapesList.current.slice(
+                    0,
+                    shapesList.current.length - 1,
+                );
+
+                requestRedraw();
+            }
+        };
+    }, [textEditingLocation, mode])
 
     const clampViewport = () => {
         if (!canvasRef.current || !backgroundSize.current) return;
@@ -115,6 +124,14 @@ function App() {
     };
 
     const handleMouseDown = (event: React.MouseEvent<HTMLCanvasElement>) => {
+        if (mode === Modes.Typography) {
+            if (textEditingLocation) {
+                return;
+            }
+            setTextEditingLocation({ x: event.clientX, y: event.clientY, key: Math.random() });
+            return;
+        }
+
         isMouseDown.current = true;
         panStart.current = {
             x: event.clientX, y: event.clientY, camX: viewportTransform.current.x, camY: viewportTransform.current.y
@@ -184,19 +201,12 @@ function App() {
     };
 
     const onMouseClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
-        if (!canvasRef.current) {
+        if (!canvasRef.current || mode === Modes.Typography) {
             return;
         }
 
-        const { x, y } = screenToWorld(viewportTransform.current, event.clientX, event.clientY);
-
         if (mode === Modes.Select) {
-            for (let i = shapesList.current.length - 1; i >= 0; i--) {
-                if (shapesList.current[i].hitTest(x, y, canvasRef.current)) {
-                    setSelectedShape(shapesList.current[i]);
-                    return;
-                }
-            }
+            setSelectedShape(hoveredShape.current);
         }
     };
 
@@ -228,6 +238,19 @@ function App() {
         requestRedraw();
     }
 
+    const resetTextEditingLocation = () => setTextEditingLocation(null);
+    const commitText = (text: string) => {
+        if (text.trim().length === 0 || !textEditingLocation) {
+            resetTextEditingLocation();
+            return;
+        }
+
+        const textShape = createTextShape(textEditingLocation.x, textEditingLocation.y, 16, "rgba(255, 0, 234, 1)", text)
+        shapesList.current = [...shapesList.current, textShape]
+        requestRedraw();
+        resetTextEditingLocation();
+    }
+
     return (
         <React.Fragment>
             <canvas
@@ -241,8 +264,9 @@ function App() {
                 onMouseMove={handleMouseMove}
                 onWheel={handleMouseWheel}
             ></canvas>
-            {mode !== null && <ModeIdentifier mode={mode} />}
+            {isFocused && mode !== null && <ModeIdentifier mode={mode} />}
             {isFocused && <Instruments shape={selectedShape} />}
+            {isFocused && textEditingLocation && <TextEditor anchor={textEditingLocation} initialText="" transform={viewportTransform.current} commit={commitText} cancel={resetTextEditingLocation} />}
         </React.Fragment>
     );
 }

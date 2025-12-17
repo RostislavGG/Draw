@@ -7,6 +7,7 @@ import { Line } from "../shapes/line";
 import { Arrow } from "../shapes/arrow";
 
 import { Modes } from "../types";
+import { Typography } from "../shapes/typography";
 
 export const createShape = (mode: Modes, x: number, y: number): Shape => {
     if (mode === Modes.Freehand) {
@@ -22,4 +23,14 @@ export const createShape = (mode: Modes, x: number, y: number): Shape => {
     }
 
     return new Rectangle(uuidv4(), x, y, 4, "#ffff00");
+};
+
+export const createTextShape = (
+    x: number,
+    y: number,
+    fontSize: number,
+    color: string,
+    text: string
+) => {
+    return new Typography(uuidv4(), x, y, text, fontSize, color);
 };
