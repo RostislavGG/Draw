@@ -1,5 +1,12 @@
 .modeContainer {
-  position: absolute;
-  top: 0;
-  left: 0;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.instruments-panel {
+    position: absolute;
+    right: 0;
+    top: 20px;
+    color: white;
 }

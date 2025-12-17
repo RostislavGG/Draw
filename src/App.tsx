@@ -12,6 +12,7 @@ import { ModeIdentifier } from "./components/ModeIdentifier";
 import { Modes } from "./types";
 import { Shape } from "./shapes/base";
 import { dataUrlToBlob } from "./utils/image";
+import { Instruments } from "./components/instruments";
 
 function App() {
     const canvasRef = React.useRef<HTMLCanvasElement>(null);
@@ -24,7 +25,9 @@ function App() {
 
     const tempShape = React.useRef<Shape>(null);
     const shapesList = React.useRef<Shape[]>([]);
+
     const hoveredShape = React.useRef<Shape | null>(null);
+    const [selectedShape, setSelectedShape] = React.useState<Shape | null>(null);
 
     const backgroundBitmap = React.useRef<ImageBitmap | null>(null);
     const backgroundSize = React.useRef<{ width: number, height: number } | null>(null);
@@ -57,6 +60,7 @@ function App() {
     window.onkeydown = (event: KeyboardEvent) => {
         if (event.key === "Escape") {
             window.api.stopDrawing();
+            setIsFocused(false)
             shapesList.current = [];
 
             if (!canvasRef.current) {
@@ -184,10 +188,16 @@ function App() {
             return;
         }
 
-        // if (mode === Modes.Freehand) {
-        //     shapesList.current = [...shapesList.current, createShape(mode, event.clientX, event.clientY)]
-        //     requestRedraw();
-        // }
+        const { x, y } = screenToWorld(viewportTransform.current, event.clientX, event.clientY);
+
+        if (mode === Modes.Select) {
+            for (let i = shapesList.current.length - 1; i >= 0; i--) {
+                if (shapesList.current[i].hitTest(x, y, canvasRef.current)) {
+                    setSelectedShape(shapesList.current[i]);
+                    return;
+                }
+            }
+        }
     };
 
     const handleMouseWheel = (event: React.WheelEvent<HTMLCanvasElement>) => {
@@ -232,6 +242,7 @@ function App() {
                 onWheel={handleMouseWheel}
             ></canvas>
             {mode !== null && <ModeIdentifier mode={mode} />}
+            {isFocused && <Instruments shape={selectedShape} />}
         </React.Fragment>
     );
 }
