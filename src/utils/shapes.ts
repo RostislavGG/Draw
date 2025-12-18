@@ -7,27 +7,70 @@ import { Line } from "../shapes/line";
 import { Arrow } from "../shapes/arrow";
 import { Elipse } from "../shapes/elipse";
 
-import { Modes } from "../types";
+import { Modes, ShapeOptions } from "../types";
 import { Typography } from "../shapes/typography";
 
-export const createShape = (mode: Modes, x: number, y: number): Shape => {
+export const createShape = (
+    mode: Modes,
+    x: number,
+    y: number,
+    options: ShapeOptions
+): Shape => {
     if (mode === Modes.Freehand) {
-        return new Freehand(uuidv4(), x, y, 8, "#ff0000");
+        return new Freehand(
+            uuidv4(),
+            x,
+            y,
+            options.strokeWidth,
+            options.strokeColor,
+            options.opacity
+        );
     }
 
     if (mode === Modes.Line) {
-        return new Line(uuidv4(), x, y, 8, "#00ffff");
+        return new Line(
+            uuidv4(),
+            x,
+            y,
+            options.strokeWidth,
+            options.strokeColor,
+            options.opacity
+        );
     }
 
     if (mode === Modes.Arrow) {
-        return new Arrow(uuidv4(), x, y, 8, "#ff00ff");
+        return new Arrow(
+            uuidv4(),
+            x,
+            y,
+            options.strokeWidth,
+            options.strokeColor,
+            options.opacity
+        );
     }
 
     if (mode === Modes.Elipse) {
-        return new Elipse(uuidv4(), x, y, 8, "#0f11ff");
+        return new Elipse(
+            uuidv4(),
+            x,
+            y,
+            options.strokeWidth,
+            options.strokeColor,
+            options.fillColor,
+            options.opacity
+        );
     }
 
-    return new Rectangle(uuidv4(), x, y, 4, "#ffff00");
+    return new Rectangle(
+        uuidv4(),
+        x,
+        y,
+        options.strokeWidth,
+        options.strokeColor,
+        options.fillColor,
+        options.roundEdges,
+        options.opacity
+    );
 };
 
 export const createTextShape = (
@@ -37,5 +80,5 @@ export const createTextShape = (
     color: string,
     text: string
 ) => {
-    return new Typography(uuidv4(), x, y, text, fontSize, color);
+    return new Typography(uuidv4(), x, y, text, fontSize, color, 1);
 };

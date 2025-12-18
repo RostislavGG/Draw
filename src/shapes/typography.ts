@@ -13,13 +13,16 @@ export class Typography extends Shape {
     fontSize: number;
     color: string;
 
+    opacity: number;
+
     constructor(
         id: string,
         x: number,
         y: number,
         text: string,
         fontSize: number,
-        color: string
+        color: string,
+        op: number
     ) {
         super(id);
 
@@ -29,6 +32,7 @@ export class Typography extends Shape {
         this.text = text;
         this.fontSize = fontSize;
         this.color = color;
+        this.opacity = op;
     }
 
     draw(canvas: HTMLCanvasElement): void {
@@ -37,10 +41,15 @@ export class Typography extends Shape {
             return;
         }
 
+        ctx.save();
+        ctx.globalAlpha = this.opacity;
+
         ctx.font = `${this.fontSize}px sans-serif`;
         ctx.fillStyle = this.color;
         ctx.textBaseline = "top";
         ctx.fillText(this.text, this.x, this.y);
+
+        ctx.restore();
 
         this.width = ctx.measureText(this.text).width;
     }

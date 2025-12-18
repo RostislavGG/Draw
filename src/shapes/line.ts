@@ -13,7 +13,16 @@ export class Line extends Shape {
     strokeColor: string;
     strokeWidth: number;
 
-    constructor(id: string, x: number, y: number, sw: number, sc: string) {
+    opacity: number;
+
+    constructor(
+        id: string,
+        x: number,
+        y: number,
+        sw: number,
+        sc: string,
+        op: number
+    ) {
         super(id);
         this.x0 = x;
         this.y0 = y;
@@ -22,6 +31,7 @@ export class Line extends Shape {
 
         this.strokeColor = sc;
         this.strokeWidth = sw;
+        this.opacity = op;
     }
 
     draw(canvas: HTMLCanvasElement): void {
@@ -30,6 +40,9 @@ export class Line extends Shape {
         if (!ctx) {
             return;
         }
+
+        ctx.save();
+        ctx.globalAlpha = this.opacity;
 
         ctx.beginPath();
         const newPath = new Path2D();
@@ -41,6 +54,7 @@ export class Line extends Shape {
         ctx.strokeStyle = this.strokeColor;
 
         ctx.stroke(newPath);
+        ctx.restore();
         this.path = newPath;
     }
 
@@ -57,7 +71,10 @@ export class Line extends Shape {
         ctx.lineWidth = this.strokeWidth;
         ctx.lineCap = "round";
 
-        return ctx.isPointInStroke(this.path, x, y);
+        return (
+            ctx.isPointInPath(this.path, x, y) ||
+            ctx.isPointInStroke(this.path, x, y)
+        );
     }
 
     updateShape(x: number, y: number): void {

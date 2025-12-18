@@ -2,6 +2,8 @@ import React from "react";
 
 import { Insets } from "../electron/types";
 
+import { DEFAULT_INSTRUMENTS_STATE } from "./constants/state";
+
 import { createShape, createTextShape } from "./utils/shapes";
 import { deriveMode } from "./utils/mode";
 import { redraw } from "./utils/drawing";
@@ -12,9 +14,9 @@ import { ModeIdentifier } from "./components/mode-identifier";
 import { Instruments } from "./components/instruments";
 import { TextEditor } from "./components/text-editing";
 
-import { Modes } from "./types";
-
 import { Shape } from "./shapes/base";
+
+import { Modes, ShapeOptions } from "./types";
 
 function App() {
     const canvasRef = React.useRef<HTMLCanvasElement>(null);
@@ -37,8 +39,11 @@ function App() {
     const backgroundSize = React.useRef<{ width: number, height: number } | null>(null);
     const viewInsets = React.useRef<ViewInsets>({ left: 0, top: 0, right: 0, bottom: 0 });
 
-    const viewportTransform = React.useRef<Transformer>({ scale: 1, x: 0, y: 0 })
-    const panStart = React.useRef<{ x: number, y: number, camX: number, camY: number } | null>(null)
+    const viewportTransform = React.useRef<Transformer>({ scale: 1, x: 0, y: 0 });
+    const panStart = React.useRef<{ x: number, y: number, camX: number, camY: number } | null>(null);
+
+    const [showInstruments, setShowInstruments] = React.useState(true);
+    const [shapeOptions, setShapeOptions] = React.useState(DEFAULT_INSTRUMENTS_STATE)
 
     React.useEffect(() => {
         return window.api.onStartDrawing(async (payload: { insets: Insets, sourceId: string }) => {
@@ -69,6 +74,8 @@ function App() {
                 window.api.stopDrawing();
                 setIsFocused(false)
                 shapesList.current = [];
+                hoveredShape.current = null;
+                setSelectedShape(null);
 
                 if (!canvasRef.current) {
                     return;
@@ -81,6 +88,10 @@ function App() {
 
                 requestRedraw()
                 return;
+            }
+
+            if (event.key === " ") {
+                setShowInstruments((prevValue) => !prevValue)
             }
 
             const derivedMode = deriveMode(event.key);
@@ -132,6 +143,11 @@ function App() {
     const handleMouseUp = () => {
         isMouseDown.current = false;
 
+        if (mode === Modes.Select) {
+            setSelectedShape(hoveredShape.current);
+            return;
+        }
+
         if (panStart.current) {
             panStart.current = null;
         }
@@ -141,6 +157,8 @@ function App() {
         }
 
         shapesList.current = [...shapesList.current, tempShape.current];
+        setSelectedShape(tempShape.current)
+        setMode(Modes.Select)
         tempShape.current = null;
 
         if (!canvasRef.current) {
@@ -185,7 +203,7 @@ function App() {
         if (tempShape.current) {
             tempShape.current.updateShape(x, y)
         } else {
-            tempShape.current = createShape(mode, x, y);
+            tempShape.current = createShape(mode, x, y, shapeOptions);
         }
 
         requestRedraw()
@@ -196,16 +214,14 @@ function App() {
             return;
         }
 
+        const { x, y } = screenToWorld(viewportTransform.current, event.clientX, event.clientY);
+
         if (mode === Modes.Typography) {
             if (textEditingLocation || Date.now() - textEditExitTime.current < 200) {
                 return;
             }
-            setTextEditingLocation({ x: event.clientX, y: event.clientY, key: Math.random() });
+            setTextEditingLocation({ x, y, key: Math.random() });
             return;
-        }
-
-        if (mode === Modes.Select) {
-            setSelectedShape(hoveredShape.current);
         }
     };
 
@@ -251,6 +267,8 @@ function App() {
         resetTextEditingLocation();
     }
 
+    const handleNewOpts = (newOpts: Partial<ShapeOptions>) => setShapeOptions(prevOptions => ({ ...prevOptions, ...newOpts }))
+
     return (
         <React.Fragment>
             <canvas
@@ -265,7 +283,7 @@ function App() {
                 onWheel={handleMouseWheel}
             ></canvas>
             {isFocused && mode !== null && <ModeIdentifier mode={mode} />}
-            {isFocused && <Instruments shape={selectedShape} />}
+            {isFocused && showInstruments && <Instruments currentMode={mode} changeMode={setMode} shape={selectedShape} shapeOptions={shapeOptions} changeShapeOpts={handleNewOpts} requestRedraw={requestRedraw} />}
             {isFocused && textEditingLocation && <TextEditor key={textEditingLocation.key} anchor={textEditingLocation} initialText="" transform={viewportTransform.current} commit={commitText} cancel={resetTextEditingLocation} />}
         </React.Fragment>
     );

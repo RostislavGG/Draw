@@ -11,8 +11,19 @@ export class Elipse extends Shape {
 
     strokeColor: string;
     strokeWidth: number;
+    fillColor: string;
 
-    constructor(id: string, x: number, y: number, sw: number, sc: string) {
+    opacity: number;
+
+    constructor(
+        id: string,
+        x: number,
+        y: number,
+        sw: number,
+        sc: string,
+        fc: string,
+        op: number
+    ) {
         super(id);
         this.x0 = x;
         this.y0 = y;
@@ -20,6 +31,8 @@ export class Elipse extends Shape {
         this.y1 = y;
         this.strokeColor = sc;
         this.strokeWidth = sw;
+        this.fillColor = fc;
+        this.opacity = op;
     }
 
     draw(canvas: HTMLCanvasElement): void {
@@ -38,11 +51,21 @@ export class Elipse extends Shape {
         const rx = (right - left) / 2;
         const ry = (bottom - top) / 2;
 
+        ctx.save();
+
+        ctx.globalAlpha = this.opacity;
+
         ctx.beginPath();
+
         ctx.strokeStyle = this.strokeColor;
         ctx.lineWidth = this.strokeWidth;
+        ctx.fillStyle = this.fillColor;
+
         ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
         ctx.stroke();
+        ctx.fill();
+
+        ctx.restore();
     }
 
     hitTest(x: number, y: number, canvas: HTMLCanvasElement): boolean {

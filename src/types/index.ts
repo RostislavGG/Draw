@@ -7,3 +7,11 @@ export enum Modes {
     Line,
     Typography,
 }
+
+export type ShapeOptions = {
+    strokeWidth: number;
+    strokeColor: string;
+    fillColor: string;
+    opacity: number;
+    roundEdges: boolean;
+};

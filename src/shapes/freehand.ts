@@ -12,11 +12,21 @@ export class Freehand extends Shape {
     strokeWidth: number;
     strokeColor: string;
 
-    constructor(id: string, x: number, y: number, sw: number, sc: string) {
+    opacity: number;
+
+    constructor(
+        id: string,
+        x: number,
+        y: number,
+        sw: number,
+        sc: string,
+        op: number
+    ) {
         super(id);
         this.points = [[x, y]];
         this.strokeColor = sc;
         this.strokeWidth = sw;
+        this.opacity = op;
     }
 
     private getStrokeString = (stroke: number[][]) => {
@@ -53,9 +63,15 @@ export class Freehand extends Shape {
         const pathData = this.getStrokeString(myPath);
         const path = new Path2D(pathData);
         this.path = path;
+
+        ctx.save();
+        ctx.globalAlpha = this.opacity;
+
         ctx.beginPath();
         ctx.fillStyle = this.strokeColor;
         ctx.fill(path);
+
+        ctx.restore();
     }
 
     hitTest(x: number, y: number, canvas: HTMLCanvasElement): boolean {
@@ -68,7 +84,10 @@ export class Freehand extends Shape {
             return false;
         }
 
-        return ctx.isPointInPath(this.path, x, y);
+        return (
+            ctx.isPointInStroke(this.path, x, y) ||
+            ctx.isPointInPath(this.path, x, y)
+        );
     }
 
     updateShape(x: number, y: number): void {

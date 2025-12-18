@@ -10,8 +10,20 @@ export class Rectangle extends Shape {
     y1: number;
     strokeColor: string;
     strokeWidth: number;
+    fillColor: string;
+    roundEdges: boolean;
+    opacity: number;
 
-    constructor(id: string, x: number, y: number, sw: number, sc: string) {
+    constructor(
+        id: string,
+        x: number,
+        y: number,
+        sw: number,
+        sc: string,
+        fc: string,
+        re: boolean,
+        op: number
+    ) {
         super(id);
         this.x0 = x;
         this.y0 = y;
@@ -19,20 +31,40 @@ export class Rectangle extends Shape {
         this.y1 = y;
         this.strokeColor = sc;
         this.strokeWidth = sw;
+        this.fillColor = fc;
+        this.roundEdges = re;
+        this.opacity = op;
     }
 
     draw(canvas: HTMLCanvasElement): void {
         const ctx = canvas.getContext("2d");
+        if (!ctx) return;
 
-        if (!ctx) {
-            return;
+        const x = Math.min(this.x0, this.x1);
+        const y = Math.min(this.y0, this.y1);
+        const w = Math.abs(this.x1 - this.x0);
+        const h = Math.abs(this.y1 - this.y0);
+
+        const r = Math.min(w, h) * 0.15;
+        const rClamped = Math.min(r, w / 2, h / 2);
+
+        ctx.save();
+        ctx.globalAlpha = this.opacity;
+        ctx.beginPath();
+
+        if (this.roundEdges) {
+            ctx.roundRect(x, y, w, h, rClamped);
+        } else {
+            ctx.rect(x, y, w, h);
         }
 
-        ctx.beginPath();
-        ctx.rect(this.x0, this.y0, this.x1 - this.x0, this.y1 - this.y0);
+        ctx.fillStyle = this.fillColor;
         ctx.lineWidth = this.strokeWidth;
         ctx.strokeStyle = this.strokeColor;
+
+        ctx.fill();
         ctx.stroke();
+        ctx.restore();
     }
 
     hitTest(x: number, y: number, _: HTMLCanvasElement): boolean {
