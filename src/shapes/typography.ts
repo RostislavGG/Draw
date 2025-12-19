@@ -1,4 +1,4 @@
-import { Modes } from "../types";
+import { Modes, TextAlign } from "../types";
 import { Shape } from "./base";
 
 export class Typography extends Shape {
@@ -11,7 +11,10 @@ export class Typography extends Shape {
 
     text: string;
     fontSize: number;
+    textAlign: TextAlign;
+
     color: string;
+    backgroundColor: string;
 
     opacity: number;
 
@@ -21,7 +24,9 @@ export class Typography extends Shape {
         y: number,
         text: string,
         fontSize: number,
+        ta: TextAlign,
         color: string,
+        bg: string,
         op: number
     ) {
         super(id);
@@ -31,8 +36,21 @@ export class Typography extends Shape {
         this.height = fontSize;
         this.text = text;
         this.fontSize = fontSize;
+        this.textAlign = ta;
         this.color = color;
+        this.backgroundColor = bg;
         this.opacity = op;
+    }
+
+    private getTextAlign(): string {
+        if (this.textAlign === TextAlign.Center) {
+            return "center";
+        }
+        if (this.textAlign === TextAlign.Right) {
+            return "right";
+        }
+
+        return "left";
     }
 
     draw(canvas: HTMLCanvasElement): void {
@@ -49,6 +67,7 @@ export class Typography extends Shape {
         ctx.font = `${this.fontSize}px sans-serif`;
         ctx.fillStyle = this.color;
         ctx.textBaseline = "top";
+        ctx.textAlign = this.getTextAlign() as CanvasTextAlign;
         ctx.fillText(this.text, this.x, this.y);
 
         ctx.restore();

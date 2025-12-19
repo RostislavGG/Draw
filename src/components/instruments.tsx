@@ -4,6 +4,7 @@ import { Elipse } from '../shapes/elipse';
 import { Freehand } from '../shapes/freehand';
 import { Line } from '../shapes/line';
 import { Rectangle } from '../shapes/rectangle';
+import { Typography } from '../shapes/typography';
 
 import { Modes, ShapeOptions } from '../types';
 
@@ -12,11 +13,12 @@ import { ElipseEditor } from './shape-editors/elipse';
 import { FreehandEditor } from './shape-editors/freehand';
 import { LineEditor } from './shape-editors/line';
 import { RectangleEditor } from './shape-editors/rectangle';
+import { TypographyEditor } from './shape-editors/text';
 
 import { DefaultEditor } from './shape-editors/default-editor';
+import { ModesPicker } from "./shape-editors/helpers/modes-picker";
 
 import "./styles.css";
-import { ModesPicker } from "./shape-editors/helpers/modes-picker";
 
 export const Instruments = ({ shape, shapeOptions, currentMode, changeMode, requestRedraw, changeShapeOpts }: { shape: Shape | null, shapeOptions: ShapeOptions, currentMode: Modes, changeMode: (newMode: Modes) => void, requestRedraw: () => void, changeShapeOpts: (newOpts: Partial<ShapeOptions>) => void }) => {
     const handleOptionsChange = (newOpts: Partial<ShapeOptions>) => {
@@ -45,7 +47,11 @@ export const Instruments = ({ shape, shapeOptions, currentMode, changeMode, requ
                     strokeColor: shapeOptions.strokeColor, strokeWidth: shapeOptions.strokeWidth, opacity: shapeOptions.opacity
                 }} onChange={handleOptionsChange} />
             }
-            if (currentMode === Modes.Typography) { }
+            if (currentMode === Modes.Typography) {
+                return <DefaultEditor options={{
+                    strokeColor: shapeOptions.strokeColor, fillColor: shapeOptions.fillColor, fontSize: shapeOptions.fontSize, textAlign: shapeOptions.textAlign, opacity: shapeOptions.opacity
+                }} onChange={handleOptionsChange} />
+            }
 
             return;
         }
@@ -68,6 +74,10 @@ export const Instruments = ({ shape, shapeOptions, currentMode, changeMode, requ
 
         if (shape.type === Modes.Freehand) {
             return <FreehandEditor key={shape.id} freehand={shape as Freehand} requestRedraw={requestRedraw} />
+        }
+
+        if (shape.type === Modes.Typography) {
+            return <TypographyEditor key={shape.id} textShape={shape as Typography} requestRedraw={requestRedraw} />
         }
 
         return null

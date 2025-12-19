@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { FaRegSquare } from "react-icons/fa6";
-import { FiMousePointer } from "react-icons/fi";
+import { LuMousePointer2 } from "react-icons/lu";
 import { FaRegCircle } from "react-icons/fa";
 import { LuPenLine } from "react-icons/lu";
 import { BsDashLg } from "react-icons/bs";
@@ -22,7 +22,7 @@ export const ModesPicker = (props: { currentMode: Modes, changeMode: (newMode: M
     }, [props.currentMode]);
 
     return <div ref={ref} className="modes-container buttons-section">
-        <div className="modes-container-row"><IconButton selected={props.currentMode === Modes.Select} tooltip='Select — S' onClick={() => props.changeMode(Modes.Select)} Icon={FiMousePointer} />
+        <div className="modes-container-row"><IconButton selected={props.currentMode === Modes.Select} tooltip='Select — S' onClick={() => props.changeMode(Modes.Select)} Icon={LuMousePointer2} />
             <IconButton selected={props.currentMode === Modes.Rectangle} tooltip='Rectangle — R' onClick={() => props.changeMode(Modes.Rectangle)} Icon={FaRegSquare} />
             <IconButton selected={props.currentMode === Modes.Elipse} tooltip='Circle — C' onClick={() => props.changeMode(Modes.Elipse)} Icon={FaRegCircle} />
             <IconButton selected={props.currentMode === Modes.Typography} tooltip='Text — T' onClick={() => props.changeMode(Modes.Typography)} Icon={IoTextSharp} />

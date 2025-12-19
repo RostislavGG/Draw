@@ -76,9 +76,18 @@ export const createShape = (
 export const createTextShape = (
     x: number,
     y: number,
-    fontSize: number,
-    color: string,
-    text: string
+    text: string,
+    options: ShapeOptions
 ) => {
-    return new Typography(uuidv4(), x, y, text, fontSize, color, 1);
+    return new Typography(
+        uuidv4(),
+        x,
+        y,
+        text,
+        options.fontSize,
+        options.textAlign,
+        options.strokeColor,
+        options.fillColor,
+        options.opacity
+    );
 };

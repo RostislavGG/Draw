@@ -1,12 +1,13 @@
 import { DEFAULT_FILL_COLOR_OPTIONS, DEFAULT_STROKE_COLOR_OPTIONS } from '../../constants/colors';
 
-import { ShapeOptions } from '../../types';
+import { ShapeOptions, TextAlign } from '../../types';
 
 import { ColorPicker } from './helpers/color-picker';
 import { StrokeWidth } from './helpers/stroke-width';
 import { Opacity } from './helpers/opacity';
 import { Edges } from './helpers/edges';
-
+import { FontSize } from './helpers/font-size';
+import { TextAlign as TextAlignEditor } from './helpers/text-align';
 
 export const DefaultEditor = ({ options, onChange }: { options: Partial<ShapeOptions>, onChange: (newOpts: Partial<ShapeOptions>) => void }) => {
     const res = [];
@@ -17,6 +18,14 @@ export const DefaultEditor = ({ options, onChange }: { options: Partial<ShapeOpt
 
     const handleFillColorChange = (newCol: string) => {
         onChange({ fillColor: newCol });
+    }
+
+    const handleFontSizeChange = (newSize: number) => {
+        onChange({ fontSize: newSize })
+    }
+
+    const handleTextAlignChange = (newAlign: TextAlign) => {
+        onChange({ textAlign: newAlign });
     }
 
     const handleStrokeWidthChange = (newWidth: number) => {
@@ -37,6 +46,14 @@ export const DefaultEditor = ({ options, onChange }: { options: Partial<ShapeOpt
 
     if (options.fillColor != null) {
         res.push(<ColorPicker colorOptions={DEFAULT_FILL_COLOR_OPTIONS} currentColor={options.fillColor} label="Background" onColorChange={handleFillColorChange} />)
+    }
+
+    if (options.fontSize != null) {
+        res.push(<FontSize currentSize={options.fontSize} onChange={handleFontSizeChange} />)
+    }
+
+    if (options.textAlign != null) {
+        res.push(<TextAlignEditor currentAlign={options.textAlign} onChange={handleTextAlignChange} />)
     }
 
     if (options.strokeWidth != null) {

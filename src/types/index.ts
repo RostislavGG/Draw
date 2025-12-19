@@ -13,6 +13,8 @@ export type ShapeOptions = {
     strokeWidth: number;
     strokeColor: string;
     fillColor: string;
+    fontSize: number;
+    textAlign: TextAlign;
     opacity: number;
     roundEdges: boolean;
 };
@@ -22,3 +24,9 @@ export type TrailPoint = {
     y: number;
     t: number;
 };
+
+export enum TextAlign {
+    Left,
+    Center,
+    Right,
+}

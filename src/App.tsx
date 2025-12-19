@@ -96,6 +96,7 @@ function App() {
 
             if (event.key === " ") {
                 setShowInstruments((prevValue) => !prevValue)
+                return;
             }
 
             const derivedMode = deriveMode(event.key);
@@ -130,7 +131,7 @@ function App() {
 
         window.addEventListener('keydown', onKeyDown);
         return () => window.removeEventListener('keydown', onKeyDown)
-    }, [textEditingLocation, mode, selectedShape])
+    }, [textEditingLocation, mode, selectedShape, showInstruments])
 
     const clampViewport = () => {
         if (!canvasRef.current || !backgroundSize.current) return;
@@ -358,7 +359,7 @@ function App() {
             return;
         }
 
-        const textShape = createTextShape(textEditingLocation.x, textEditingLocation.y, 16, "rgba(255, 0, 234, 1)", text)
+        const textShape = createTextShape(textEditingLocation.x, textEditingLocation.y, text, shapeOptions)
         shapesList.current = [...shapesList.current, textShape]
         requestRedraw();
         resetTextEditingLocation();
@@ -379,7 +380,7 @@ function App() {
                 onWheel={handleMouseWheel}
             ></canvas>
             {isFocused && showInstruments && <Instruments currentMode={mode} changeMode={changeMode} shape={selectedShape} shapeOptions={shapeOptions} changeShapeOpts={handleNewOpts} requestRedraw={requestRedraw} />}
-            {isFocused && textEditingLocation && <TextEditor key={textEditingLocation.key} anchor={textEditingLocation} initialText="" transform={viewportTransform.current} commit={commitText} cancel={resetTextEditingLocation} />}
+            {isFocused && textEditingLocation && <TextEditor key={textEditingLocation.key} anchor={textEditingLocation} initialText="" transform={viewportTransform.current} commit={commitText} cancel={resetTextEditingLocation} color={shapeOptions.strokeColor} bgColor={shapeOptions.fillColor} fontSize={shapeOptions.fontSize} textAlign={shapeOptions.textAlign} opacity={shapeOptions.opacity} />}
         </React.Fragment>
     );
 }
