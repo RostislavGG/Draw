@@ -1,18 +1,30 @@
 import { DEAFULT_STROKE_WIDTHS } from "../../../constants/stroke"
 
-export const StrokeWidth = (props: { currentWidth: number, onChange: (newVal: number) => void }) => {
-    const getStyle = (value: number) => {
-        return {
-            width: 30,
-            height: 30,
-            border: value === props.currentWidth ? "2px solid orange" : "none"
-        }
-    }
+import { IconButton } from "./icon-button"
+import { StrokeBoldIcon, StrokeMediumIcon, StrokeSmallIcon } from "./stroke-icons"
 
-    return <div>
-        <p>Stroke Width</p>
-        <div style={getStyle(DEAFULT_STROKE_WIDTHS.SMALL)} onClick={() => props.onChange(DEAFULT_STROKE_WIDTHS.SMALL)}>Small</div>
-        <div style={getStyle(DEAFULT_STROKE_WIDTHS.MEDIUM)} onClick={() => props.onChange(DEAFULT_STROKE_WIDTHS.MEDIUM)}>Medium</div>
-        <div style={getStyle(DEAFULT_STROKE_WIDTHS.LARGE)} onClick={() => props.onChange(DEAFULT_STROKE_WIDTHS.LARGE)}>Large</div>
+export const StrokeWidth = (props: { currentWidth: number, onChange: (newVal: number) => void }) => {
+    return <div className="buttons-section">
+        <p className="title">Stroke Width</p>
+        <div className="modes-container-row">
+            <IconButton
+                selected={props.currentWidth === DEAFULT_STROKE_WIDTHS.SMALL}
+                onClick={() => props.onChange(DEAFULT_STROKE_WIDTHS.SMALL)}
+                Icon={StrokeSmallIcon}
+                tooltip="Small"
+            />
+            <IconButton
+                selected={props.currentWidth === DEAFULT_STROKE_WIDTHS.MEDIUM}
+                onClick={() => props.onChange(DEAFULT_STROKE_WIDTHS.MEDIUM)}
+                Icon={StrokeMediumIcon}
+                tooltip="Medium"
+            />
+            <IconButton
+                selected={props.currentWidth === DEAFULT_STROKE_WIDTHS.LARGE}
+                onClick={() => props.onChange(DEAFULT_STROKE_WIDTHS.LARGE)}
+                Icon={StrokeBoldIcon}
+                tooltip="Bold"
+            />
+        </div>
     </div>
 }

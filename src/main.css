@@ -10,3 +10,11 @@ canvas {
     touch-action: none;
     image-rendering: pixelated;
 }
+
+* {
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+p {
+    margin: 4px 0px;
+}

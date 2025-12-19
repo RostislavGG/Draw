@@ -31,8 +31,8 @@ export const FreehandEditor = ({ freehand, requestRedraw }: { freehand: Freehand
     }
 
     return <div>
-        <StrokeWidth currentWidth={strokeWidth} onChange={onStrokeWidthChange} />
         <ColorPicker colorOptions={DEFAULT_STROKE_COLOR_OPTIONS} currentColor={strokeColor} label="Color" onColorChange={onStrokeColorChange} />
+        <StrokeWidth currentWidth={strokeWidth} onChange={onStrokeWidthChange} />
         <Opacity currentValue={opacity} onChange={onOpacityChange} />
     </div>
 }

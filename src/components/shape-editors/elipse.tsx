@@ -38,9 +38,9 @@ export const ElipseEditor = ({ elipse, requestRedraw }: { elipse: Elipse, reques
     }
 
     return <div>
-        <StrokeWidth currentWidth={strokeWidth} onChange={onStrokeWidthChange} />
         <ColorPicker colorOptions={DEFAULT_STROKE_COLOR_OPTIONS} currentColor={strokeColor} label="Stroke" onColorChange={onStrokeColorChange} />
         <ColorPicker colorOptions={DEFAULT_FILL_COLOR_OPTIONS} currentColor={fillColor} label="Background" onColorChange={onFillColorChange} />
+        <StrokeWidth currentWidth={strokeWidth} onChange={onStrokeWidthChange} />
         <Opacity currentValue={opacity} onChange={onOpacityChange} />
     </div>
 }

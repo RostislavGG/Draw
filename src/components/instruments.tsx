@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { Arrow } from '../shapes/arrow';
 import { Shape } from '../shapes/base';
 import { Elipse } from '../shapes/elipse';
@@ -18,6 +16,7 @@ import { RectangleEditor } from './shape-editors/rectangle';
 import { DefaultEditor } from './shape-editors/default-editor';
 
 import "./styles.css";
+import { ModesPicker } from "./shape-editors/helpers/modes-picker";
 
 export const Instruments = ({ shape, shapeOptions, currentMode, changeMode, requestRedraw, changeShapeOpts }: { shape: Shape | null, shapeOptions: ShapeOptions, currentMode: Modes, changeMode: (newMode: Modes) => void, requestRedraw: () => void, changeShapeOpts: (newOpts: Partial<ShapeOptions>) => void }) => {
     const handleOptionsChange = (newOpts: Partial<ShapeOptions>) => {
@@ -74,16 +73,8 @@ export const Instruments = ({ shape, shapeOptions, currentMode, changeMode, requ
         return null
     }
     return <div className='instruments-panel'>
-        <div>
-            <p>Modes</p>
-            <button onClick={() => changeMode(Modes.Select)}>Normal</button>
-            <button onClick={() => changeMode(Modes.Rectangle)}>Rect</button>
-            <button onClick={() => changeMode(Modes.Elipse)}>Elipse</button>
-            <button onClick={() => changeMode(Modes.Freehand)}>Draw</button>
-            <button onClick={() => changeMode(Modes.Line)}>Line</button>
-            <button onClick={() => changeMode(Modes.Arrow)}>Arrow</button>
-            <button onClick={() => changeMode(Modes.Typography)}>Text</button>
-        </div>
+        <ModesPicker changeMode={changeMode} currentMode={currentMode} />
         {getShapeEditor()}
+        <p className='footer-text'>Press Space To Hide</p>
     </div>
 }

@@ -7,7 +7,7 @@ export const deriveMode = (key: string) => {
     if (key === "r") {
         return Modes.Rectangle;
     }
-    if (key === "e") {
+    if (key === "c") {
         return Modes.Elipse;
     }
     if (key === "t") {

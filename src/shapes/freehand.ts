@@ -57,7 +57,7 @@ export class Freehand extends Shape {
         }
 
         const myPath = getStroke(this.points, {
-            size: this.strokeWidth,
+            size: this.strokeWidth * 2,
         });
 
         const pathData = this.getStrokeString(myPath);

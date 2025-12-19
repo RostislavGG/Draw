@@ -32,11 +32,11 @@ export const DefaultEditor = ({ options, onChange }: { options: Partial<ShapeOpt
     }
 
     if (options.strokeColor != null) {
-        res.push(<ColorPicker colorOptions={DEFAULT_STROKE_COLOR_OPTIONS} currentColor={options.strokeColor} label="Stroke Color" onColorChange={handleStrokeColorChange} />)
+        res.push(<ColorPicker colorOptions={DEFAULT_STROKE_COLOR_OPTIONS} currentColor={options.strokeColor} label="Color" onColorChange={handleStrokeColorChange} />)
     }
 
     if (options.fillColor != null) {
-        res.push(<ColorPicker colorOptions={DEFAULT_FILL_COLOR_OPTIONS} currentColor={options.fillColor} label="Fill Color" onColorChange={handleFillColorChange} />)
+        res.push(<ColorPicker colorOptions={DEFAULT_FILL_COLOR_OPTIONS} currentColor={options.fillColor} label="Background" onColorChange={handleFillColorChange} />)
     }
 
     if (options.strokeWidth != null) {

@@ -10,7 +10,6 @@ import { redraw } from "./utils/drawing";
 import { clampToBackground, screenToWorld, Transformer, ViewInsets } from "./utils/canvas";
 import { captureImage, stopCapture } from "./utils/screenshot";
 
-import { ModeIdentifier } from "./components/mode-identifier";
 import { Instruments } from "./components/instruments";
 import { TextEditor } from "./components/text-editing";
 
@@ -59,6 +58,7 @@ function App() {
             backgroundBitmap.current = bitmap;
             backgroundSize.current = { width: bitmap.width, height: bitmap.height };
             setIsFocused(true)
+            setShowInstruments(true)
         })
     }, []);
 
@@ -84,7 +84,8 @@ function App() {
                 backgroundBitmap.current = null;
                 backgroundSize.current = null;
                 viewportTransform.current = { scale: 1, x: 0, y: 0 }
-                setMode(Modes.Select)
+
+                changeMode(Modes.Select)
 
                 requestRedraw()
                 return;
@@ -96,7 +97,7 @@ function App() {
 
             const derivedMode = deriveMode(event.key);
             if (derivedMode !== null) {
-                setMode(derivedMode);
+                changeMode(derivedMode);
                 return;
             }
 
@@ -124,6 +125,11 @@ function App() {
         clampToBackground(viewportTransform.current, canvasRef.current, backgroundSize.current, viewInsets.current);
     };
 
+    const changeMode = (newMode: Modes, selection: Shape | null = null) => {
+        setSelectedShape(selection);
+        setMode(newMode)
+    }
+
     const requestRedraw = () => {
         if (rafId.current != null) return;
         rafId.current = requestAnimationFrame(() => {
@@ -140,11 +146,24 @@ function App() {
         }
     };
 
-    const handleMouseUp = () => {
+    const handleMouseUp = (event: React.MouseEvent<HTMLCanvasElement>) => {
         isMouseDown.current = false;
+
+        if (!canvasRef.current) {
+            return;
+        }
 
         if (mode === Modes.Select) {
             setSelectedShape(hoveredShape.current);
+            return;
+        }
+
+        const { x, y } = screenToWorld(viewportTransform.current, event.clientX, event.clientY);
+        if (mode === Modes.Typography) {
+            if (textEditingLocation || Date.now() - textEditExitTime.current < 200) {
+                return;
+            }
+            setTextEditingLocation({ x, y, key: Math.random() });
             return;
         }
 
@@ -156,19 +175,18 @@ function App() {
             return;
         }
 
+        if (mode !== Modes.Freehand) {
+            changeMode(Modes.Select, tempShape.current)
+        }
+
         shapesList.current = [...shapesList.current, tempShape.current];
-        setSelectedShape(tempShape.current)
-        setMode(Modes.Select)
         tempShape.current = null;
 
-        if (!canvasRef.current) {
-            return;
-        }
         requestRedraw()
     };
 
     const handleMouseMove = (event: React.MouseEvent<HTMLCanvasElement>) => {
-        if (!canvasRef.current || !isFocused || mode === null) {
+        if (!canvasRef.current || !isFocused) {
             return;
         }
 
@@ -214,15 +232,7 @@ function App() {
             return;
         }
 
-        const { x, y } = screenToWorld(viewportTransform.current, event.clientX, event.clientY);
 
-        if (mode === Modes.Typography) {
-            if (textEditingLocation || Date.now() - textEditExitTime.current < 200) {
-                return;
-            }
-            setTextEditingLocation({ x, y, key: Math.random() });
-            return;
-        }
     };
 
     const handleMouseWheel = (event: React.WheelEvent<HTMLCanvasElement>) => {
@@ -282,8 +292,7 @@ function App() {
                 onMouseMove={handleMouseMove}
                 onWheel={handleMouseWheel}
             ></canvas>
-            {isFocused && mode !== null && <ModeIdentifier mode={mode} />}
-            {isFocused && showInstruments && <Instruments currentMode={mode} changeMode={setMode} shape={selectedShape} shapeOptions={shapeOptions} changeShapeOpts={handleNewOpts} requestRedraw={requestRedraw} />}
+            {isFocused && showInstruments && <Instruments currentMode={mode} changeMode={changeMode} shape={selectedShape} shapeOptions={shapeOptions} changeShapeOpts={handleNewOpts} requestRedraw={requestRedraw} />}
             {isFocused && textEditingLocation && <TextEditor key={textEditingLocation.key} anchor={textEditingLocation} initialText="" transform={viewportTransform.current} commit={commitText} cancel={resetTextEditingLocation} />}
         </React.Fragment>
     );

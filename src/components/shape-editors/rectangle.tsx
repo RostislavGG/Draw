@@ -46,10 +46,10 @@ export const RectangleEditor = ({ rectangle, requestRedraw }: { rectangle: Recta
     }
 
     return <div>
-        <StrokeWidth currentWidth={strokeWidth} onChange={onStrokeWidthChange} />
-        <ColorPicker colorOptions={DEFAULT_STROKE_COLOR_OPTIONS} currentColor={strokeColor} label="Stroke" onColorChange={onStrokeColorChange} />
+        <ColorPicker colorOptions={DEFAULT_STROKE_COLOR_OPTIONS} currentColor={strokeColor} label="Color" onColorChange={onStrokeColorChange} />
         <ColorPicker colorOptions={DEFAULT_FILL_COLOR_OPTIONS} currentColor={fillColor} label="Background" onColorChange={onFillColorChange} />
-        <Opacity currentValue={opacity} onChange={onOpacityChange} />
+        <StrokeWidth currentWidth={strokeWidth} onChange={onStrokeWidthChange} />
         <Edges rounded={roundEdges} onChange={onEdgesChange} />
+        <Opacity currentValue={opacity} onChange={onOpacityChange} />
     </div>
 }
