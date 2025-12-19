@@ -1,7 +1,9 @@
 import { getStroke } from "perfect-freehand";
 
 import { Modes } from "../types";
+
 import { getStrokeString } from "../utils/drawing";
+import { makeLaserFillStyle } from "../utils/freehand-colors";
 
 import { Shape } from "./base";
 
@@ -41,24 +43,21 @@ export class Freehand extends Shape {
             return;
         }
 
-        const myPath = getStroke(this.points, {
-            size: this.strokeWidth * 2,
-        });
-
+        const myPath = getStroke(this.points, { size: this.strokeWidth * 2 });
         const pathData = getStrokeString(myPath);
         const path = new Path2D(pathData);
         this.path = path;
 
-        ctx.save();
-        ctx.globalAlpha = this.deletionScheduled
-            ? this.opacity / 5
-            : this.opacity;
+        const op = this.deletionScheduled ? this.opacity / 5 : this.opacity;
 
-        ctx.beginPath();
-        ctx.fillStyle = this.strokeColor;
-        ctx.fill(path);
+        const laserFill = makeLaserFillStyle(this.strokeColor, {
+            blend: "source-over",
+            glowScale: 1,
+            innerLift: 0.1,
+            outerLift: 0.16,
+        });
 
-        ctx.restore();
+        laserFill(ctx, path, this.strokeWidth, op);
     }
 
     hitTest(x: number, y: number, canvas: HTMLCanvasElement): boolean {
