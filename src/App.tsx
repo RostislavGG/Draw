@@ -65,7 +65,7 @@ function App() {
     }, []);
 
     React.useEffect(() => {
-        window.onkeydown = (event: KeyboardEvent) => {
+        const onKeyDown = (event: KeyboardEvent) => {
             if (event.key === "Escape") {
                 if (textEditingLocation) {
                     resetTextEditingLocation()
@@ -105,11 +105,7 @@ function App() {
             }
 
             if (event.key === "z" && event.ctrlKey) {
-                if (shapesList.current.length === 0) {
-                    return;
-                }
-
-                if (!canvasRef.current) {
+                if (!canvasRef.current || shapesList.current.length === 0) {
                     return;
                 }
 
@@ -120,8 +116,21 @@ function App() {
 
                 requestRedraw();
             }
+
+            if (event.key === "Backspace") {
+                if (!canvasRef.current || shapesList.current.length === 0 || !selectedShape) {
+                    return;
+                }
+
+                shapesList.current = shapesList.current.filter(shapes => shapes.id !== selectedShape.id);
+                setSelectedShape(null);
+                requestRedraw();
+            }
         };
-    }, [textEditingLocation, mode])
+
+        window.addEventListener('keydown', onKeyDown);
+        return () => window.removeEventListener('keydown', onKeyDown)
+    }, [textEditingLocation, mode, selectedShape])
 
     const clampViewport = () => {
         if (!canvasRef.current || !backgroundSize.current) return;
