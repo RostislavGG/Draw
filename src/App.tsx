@@ -15,7 +15,8 @@ import { TextEditor } from "./components/text-editing";
 
 import { Shape } from "./shapes/base";
 
-import { Modes, ShapeOptions } from "./types";
+import { Modes, ShapeOptions, TrailPoint } from "./types";
+import { ERASER_TRAIL_MAX, ERASER_TRAIL_MS } from "./constants/trail";
 
 function App() {
     const canvasRef = React.useRef<HTMLCanvasElement>(null);
@@ -30,6 +31,7 @@ function App() {
 
     const tempShape = React.useRef<Shape>(null);
     const shapesList = React.useRef<Shape[]>([]);
+    const eraserTrail = React.useRef<TrailPoint[]>([])
 
     const hoveredShape = React.useRef<Shape | null>(null);
     const [selectedShape, setSelectedShape] = React.useState<Shape | null>(null);
@@ -42,7 +44,7 @@ function App() {
     const panStart = React.useRef<{ x: number, y: number, camX: number, camY: number } | null>(null);
 
     const [showInstruments, setShowInstruments] = React.useState(true);
-    const [shapeOptions, setShapeOptions] = React.useState(DEFAULT_INSTRUMENTS_STATE)
+    const [shapeOptions, setShapeOptions] = React.useState(DEFAULT_INSTRUMENTS_STATE);
 
     React.useEffect(() => {
         return window.api.onStartDrawing(async (payload: { insets: Insets, sourceId: string }) => {
@@ -75,6 +77,7 @@ function App() {
                 setIsFocused(false)
                 shapesList.current = [];
                 hoveredShape.current = null;
+                eraserTrail.current = [];
                 setSelectedShape(null);
 
                 if (!canvasRef.current) {
@@ -125,22 +128,78 @@ function App() {
         clampToBackground(viewportTransform.current, canvasRef.current, backgroundSize.current, viewInsets.current);
     };
 
+    const pruneTrail = (now: number) => {
+        const cutoff = now - ERASER_TRAIL_MS;
+        while (eraserTrail.current.length && eraserTrail.current[0].t < cutoff) {
+            eraserTrail.current.shift();
+        }
+
+        if (eraserTrail.current.length > ERASER_TRAIL_MAX) {
+            eraserTrail.current = eraserTrail.current.slice(-ERASER_TRAIL_MAX);
+        }
+    };
+
+    const eraseAlongSegment = (a: { x: number; y: number }, b: { x: number; y: number }) => {
+        if (!canvasRef.current) return;
+
+        const stepWorld = 4 / viewportTransform.current.scale;
+
+        const dx = b.x - a.x;
+        const dy = b.y - a.y;
+        const dist = Math.hypot(dx, dy);
+
+        const steps = Math.max(1, Math.ceil(dist / stepWorld));
+
+        for (let i = 0; i <= steps; i++) {
+            const t = i / steps;
+            const sx = a.x + dx * t;
+            const sy = a.y + dy * t;
+
+            for (let j = shapesList.current.length - 1; j >= 0; j--) {
+                const shape = shapesList.current[j];
+                if (shape.deletionScheduled) continue;
+
+                if (shape.hitTest(sx, sy, canvasRef.current)) {
+                    shape.deletionScheduled = true;
+                }
+            }
+        }
+    };
+
     const changeMode = (newMode: Modes, selection: Shape | null = null) => {
         setSelectedShape(selection);
         setMode(newMode)
     }
 
     const requestRedraw = () => {
-        if (rafId.current != null) return;
+        if (rafId.current != null) {
+            return;
+        }
+
         rafId.current = requestAnimationFrame(() => {
             rafId.current = null;
-            if (!canvasRef.current) return;
-            redraw(canvasRef.current, viewportTransform.current, shapesList.current, tempShape.current, backgroundBitmap.current, backgroundSize.current);
+            if (!canvasRef.current) {
+                return;
+            }
+
+            const now = Date.now();
+            pruneTrail(now);
+            redraw(canvasRef.current, viewportTransform.current, shapesList.current, tempShape.current, backgroundBitmap.current, backgroundSize.current, eraserTrail.current, now);
+
+            if (eraserTrail.current.length > 0) {
+                requestRedraw();
+            }
         });
     };
 
     const handleMouseDown = (event: React.MouseEvent<HTMLCanvasElement>) => {
         isMouseDown.current = true;
+
+        if (mode === Modes.Eraser) {
+            const now = Date.now();
+            eraserTrail.current = [{ x: event.clientX, y: event.clientY, t: now }]
+        }
+
         panStart.current = {
             x: event.clientX, y: event.clientY, camX: viewportTransform.current.x, camY: viewportTransform.current.y
         }
@@ -153,8 +212,16 @@ function App() {
             return;
         }
 
+        eraserTrail.current = [];
+
         if (mode === Modes.Select) {
             setSelectedShape(hoveredShape.current);
+            return;
+        }
+
+        if (mode === Modes.Eraser) {
+            shapesList.current = shapesList.current.filter(s => !s.deletionScheduled)
+            requestRedraw()
             return;
         }
 
@@ -190,9 +257,28 @@ function App() {
             return;
         }
 
-        canvasRef.current.style.cursor = "default"
-
         const { x, y } = screenToWorld(viewportTransform.current, event.clientX, event.clientY);
+
+        if (mode === Modes.Eraser && isMouseDown.current) {
+            const now = Date.now();
+            eraserTrail.current.push({ x: event.clientX, y: event.clientY, t: now });
+            pruneTrail(now)
+
+            if (eraserTrail.current.length > 1) {
+                const p1 = eraserTrail.current[eraserTrail.current.length - 1];
+                const p0 = eraserTrail.current[eraserTrail.current.length - 2];
+
+                const a = screenToWorld(viewportTransform.current, p0.x, p0.y);
+                const b = screenToWorld(viewportTransform.current, p1.x, p1.y);
+
+                eraseAlongSegment(a, b);
+            }
+
+            requestRedraw();
+            return;
+        }
+
+        canvasRef.current.style.cursor = "default"
 
         if (mode === Modes.Select) {
             if (isMouseDown.current && panStart.current) {
@@ -225,14 +311,6 @@ function App() {
         }
 
         requestRedraw()
-    };
-
-    const onMouseClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
-        if (!canvasRef.current) {
-            return;
-        }
-
-
     };
 
     const handleMouseWheel = (event: React.WheelEvent<HTMLCanvasElement>) => {
@@ -286,7 +364,6 @@ function App() {
                 ref={canvasRef}
                 height={window.innerHeight}
                 width={window.innerWidth}
-                onClick={onMouseClick}
                 onMouseDown={handleMouseDown}
                 onMouseUp={handleMouseUp}
                 onMouseMove={handleMouseMove}

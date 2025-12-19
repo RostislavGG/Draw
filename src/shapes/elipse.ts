@@ -53,7 +53,9 @@ export class Elipse extends Shape {
 
         ctx.save();
 
-        ctx.globalAlpha = this.opacity;
+        ctx.globalAlpha = this.deletionScheduled
+            ? this.opacity / 5
+            : this.opacity;
 
         ctx.beginPath();
 

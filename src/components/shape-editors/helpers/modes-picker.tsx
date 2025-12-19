@@ -7,6 +7,7 @@ import { LuPenLine } from "react-icons/lu";
 import { BsDashLg } from "react-icons/bs";
 import { HiOutlineArrowLongRight } from "react-icons/hi2";
 import { IoTextSharp } from "react-icons/io5";
+import { PiEraser } from "react-icons/pi";
 
 import { Modes } from "../../../types"
 
@@ -28,6 +29,6 @@ export const ModesPicker = (props: { currentMode: Modes, changeMode: (newMode: M
         </div>
         <div className="modes-container-row"><IconButton selected={props.currentMode === Modes.Freehand} tooltip='Draw — D' onClick={() => props.changeMode(Modes.Freehand)} Icon={LuPenLine} />
             <IconButton selected={props.currentMode === Modes.Line} tooltip='Line — L' onClick={() => props.changeMode(Modes.Line)} Icon={BsDashLg} />
-            <IconButton selected={props.currentMode === Modes.Arrow} tooltip='Arrow — A' onClick={() => props.changeMode(Modes.Arrow)} Icon={HiOutlineArrowLongRight} /></div>
+            <IconButton selected={props.currentMode === Modes.Arrow} tooltip='Arrow — A' onClick={() => props.changeMode(Modes.Arrow)} Icon={HiOutlineArrowLongRight} /><IconButton selected={props.currentMode === Modes.Eraser} tooltip='Eraser — E' onClick={() => props.changeMode(Modes.Eraser)} Icon={PiEraser} /></div>
     </div>
 }

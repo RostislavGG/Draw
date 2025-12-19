@@ -42,7 +42,9 @@ export class Line extends Shape {
         }
 
         ctx.save();
-        ctx.globalAlpha = this.opacity;
+        ctx.globalAlpha = this.deletionScheduled
+            ? this.opacity / 5
+            : this.opacity;
 
         ctx.beginPath();
         const newPath = new Path2D();

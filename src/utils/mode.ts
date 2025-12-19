@@ -22,6 +22,9 @@ export const deriveMode = (key: string) => {
     if (key === "s") {
         return Modes.Select;
     }
+    if (key === "e") {
+        return Modes.Eraser;
+    }
 
     return null;
 };

@@ -42,7 +42,9 @@ export class Typography extends Shape {
         }
 
         ctx.save();
-        ctx.globalAlpha = this.opacity;
+        ctx.globalAlpha = this.deletionScheduled
+            ? this.opacity / 5
+            : this.opacity;
 
         ctx.font = `${this.fontSize}px sans-serif`;
         ctx.fillStyle = this.color;

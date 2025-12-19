@@ -1,6 +1,7 @@
 import { getStroke } from "perfect-freehand";
 
 import { Modes } from "../types";
+import { getStrokeString } from "../utils/drawing";
 
 import { Shape } from "./base";
 
@@ -29,22 +30,6 @@ export class Freehand extends Shape {
         this.opacity = op;
     }
 
-    private getStrokeString = (stroke: number[][]) => {
-        if (!stroke.length) return "";
-
-        const d = stroke.reduce(
-            (acc, [x0, y0], i, arr) => {
-                const [x1, y1] = arr[(i + 1) % arr.length];
-                acc.push(x0, y0, (x0 + x1) / 2, (y0 + y1) / 2);
-                return acc;
-            },
-            ["M", ...stroke[0], "Q"]
-        );
-
-        d.push("Z");
-        return d.join(" ");
-    };
-
     draw(canvas: HTMLCanvasElement): void {
         if (this.points.length === 0) {
             return;
@@ -60,12 +45,14 @@ export class Freehand extends Shape {
             size: this.strokeWidth * 2,
         });
 
-        const pathData = this.getStrokeString(myPath);
+        const pathData = getStrokeString(myPath);
         const path = new Path2D(pathData);
         this.path = path;
 
         ctx.save();
-        ctx.globalAlpha = this.opacity;
+        ctx.globalAlpha = this.deletionScheduled
+            ? this.opacity / 5
+            : this.opacity;
 
         ctx.beginPath();
         ctx.fillStyle = this.strokeColor;

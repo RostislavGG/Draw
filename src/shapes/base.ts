@@ -4,6 +4,8 @@ export abstract class Shape {
     readonly id: string;
     abstract readonly type: Modes;
 
+    deletionScheduled: boolean = false;
+
     constructor(id: string) {
         this.id = id;
     }

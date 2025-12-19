@@ -47,7 +47,9 @@ export class Arrow extends Shape {
         const newPath = new Path2D();
 
         ctx.save();
-        ctx.globalAlpha = this.opacity;
+        ctx.globalAlpha = this.deletionScheduled
+            ? this.opacity / 5
+            : this.opacity;
 
         ctx.beginPath();
         newPath.moveTo(this.x0, this.y0);
@@ -85,6 +87,9 @@ export class Arrow extends Shape {
         if (!ctx) {
             return false;
         }
+
+        ctx.lineWidth = this.strokeWidth;
+        ctx.lineCap = "round";
 
         return (
             ctx.isPointInPath(this.path, x, y) ||

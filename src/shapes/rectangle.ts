@@ -8,10 +8,12 @@ export class Rectangle extends Shape {
     y0: number;
     x1: number;
     y1: number;
+
     strokeColor: string;
     strokeWidth: number;
     fillColor: string;
     roundEdges: boolean;
+
     opacity: number;
 
     constructor(
@@ -49,7 +51,9 @@ export class Rectangle extends Shape {
         const rClamped = Math.min(r, w / 2, h / 2);
 
         ctx.save();
-        ctx.globalAlpha = this.opacity;
+        ctx.globalAlpha = this.deletionScheduled
+            ? this.opacity / 5
+            : this.opacity;
         ctx.beginPath();
 
         if (this.roundEdges) {

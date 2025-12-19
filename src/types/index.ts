@@ -6,6 +6,7 @@ export enum Modes {
     Elipse,
     Line,
     Typography,
+    Eraser,
 }
 
 export type ShapeOptions = {
@@ -14,4 +15,10 @@ export type ShapeOptions = {
     fillColor: string;
     opacity: number;
     roundEdges: boolean;
+};
+
+export type TrailPoint = {
+    x: number;
+    y: number;
+    t: number;
 };
