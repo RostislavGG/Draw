@@ -4,7 +4,7 @@ import { Shape } from "../shapes/base";
 
 import { TrailPoint } from "../types";
 
-import { Transformer } from "./canvas";
+import { Transformer, worldToScreen } from "./canvas";
 
 export const getStrokeString = (stroke: number[][]) => {
     if (!stroke.length) return "";
@@ -86,11 +86,96 @@ const drawEraserTrail = (
     ctx.restore();
 };
 
+const drawHandle = (
+    ctx: CanvasRenderingContext2D,
+    cx: number,
+    cy: number,
+    size: number
+) => {
+    const r = size / 2;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, r, r, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+};
+
+const drawSelectionAroundShape = (
+    ctx: CanvasRenderingContext2D,
+    shape: Shape,
+    transform: Transformer
+) => {
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+    ctx.save();
+
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = "rgba(80, 162, 255, 0.95)";
+
+    const handleStroke = "rgba(238, 238, 238, 1)";
+    const HANDLE_SIZE = 12;
+
+    const bounds = shape.getBounds();
+
+    if (bounds.kind === "segment") {
+        const a = worldToScreen(transform, bounds.x0, bounds.y0);
+        const b = worldToScreen(transform, bounds.x1, bounds.y1);
+
+        ctx.beginPath();
+        ctx.moveTo(a.x, a.y);
+        ctx.lineTo(b.x, b.y);
+        ctx.stroke();
+
+        ctx.setLineDash([]);
+        ctx.strokeStyle = handleStroke;
+        ctx.fillStyle = handleStroke;
+
+        drawHandle(ctx, a.x, a.y, HANDLE_SIZE);
+        drawHandle(ctx, b.x, b.y, HANDLE_SIZE);
+
+        ctx.restore();
+        return;
+    }
+
+    const p0 = worldToScreen(transform, bounds.x, bounds.y);
+    const p1 = worldToScreen(
+        transform,
+        bounds.x + bounds.width,
+        bounds.y + bounds.height
+    );
+
+    const left = Math.min(p0.x, p1.x);
+    const top = Math.min(p0.y, p1.y);
+    const right = Math.max(p0.x, p1.x);
+    const bottom = Math.max(p0.y, p1.y);
+
+    ctx.beginPath();
+    ctx.rect(left, top, right - left, bottom - top);
+    ctx.stroke();
+
+    const points = [
+        { x: left, y: top },
+        { x: right, y: top },
+        { x: right, y: bottom },
+        { x: left, y: bottom },
+    ];
+
+    ctx.setLineDash([]);
+    ctx.strokeStyle = handleStroke;
+    ctx.fillStyle = handleStroke;
+
+    for (const pt of points) {
+        drawHandle(ctx, pt.x, pt.y, HANDLE_SIZE);
+    }
+
+    ctx.restore();
+};
+
 export const redraw = (
     canvas: HTMLCanvasElement,
     transformer: Transformer,
     shapesList: Shape[],
     currentShape: Shape | null,
+    selectedShape: Shape | null,
     backgroundBitmap: ImageBitmap | null,
     backgroundSize: { width: number; height: number } | null,
     eraserTrail: TrailPoint[],
@@ -107,6 +192,10 @@ export const redraw = (
     shapesList.forEach((shape) => shape.draw(canvas));
     if (currentShape) {
         currentShape.draw(canvas);
+    }
+
+    if (selectedShape) {
+        drawSelectionAroundShape(ctx, selectedShape, transformer);
     }
 
     if (eraserTrail.length > 0) {

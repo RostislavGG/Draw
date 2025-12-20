@@ -1,4 +1,4 @@
-import { Modes } from "../types";
+import { Bounds, Modes } from "../types";
 import { Shape } from "./base";
 
 export class Rectangle extends Shape {
@@ -83,5 +83,20 @@ export class Rectangle extends Shape {
     updateShape(x: number, y: number): void {
         this.x1 = x;
         this.y1 = y;
+    }
+
+    getBounds(): Bounds {
+        const minX = Math.min(this.x0, this.x1);
+        const minY = Math.min(this.y0, this.y1);
+        const maxX = Math.max(this.x0, this.x1);
+        const maxY = Math.max(this.y0, this.y1);
+
+        return {
+            kind: "rect",
+            x: minX,
+            y: minY,
+            width: maxX - minX,
+            height: maxY - minY,
+        };
     }
 }

@@ -1,6 +1,6 @@
 import { getStroke } from "perfect-freehand";
 
-import { Modes } from "../types";
+import { Bounds, Modes } from "../types";
 
 import { getStrokeString } from "../utils/drawing";
 import { makeLaserFillStyle } from "../utils/freehand-colors";
@@ -78,5 +78,39 @@ export class Freehand extends Shape {
 
     updateShape(x: number, y: number): void {
         this.points.push([x, y]);
+    }
+
+    getBounds(): Bounds {
+        if (this.points.length < 1) {
+            return { kind: "rect", x: -10, y: -10, width: 0, height: 0 };
+        }
+
+        let currentMinX = this.points[0][0];
+        let currentMinY = this.points[0][1];
+        let currentMaxX = this.points[0][0];
+        let currentMaxY = this.points[0][1];
+
+        for (let i = 0; i < this.points.length; i++) {
+            if (currentMinX > this.points[i][0]) {
+                currentMinX = this.points[i][0];
+            }
+            if (currentMaxX < this.points[i][0]) {
+                currentMaxX = this.points[i][0];
+            }
+            if (currentMinY > this.points[i][1]) {
+                currentMinY = this.points[i][1];
+            }
+            if (currentMaxY < this.points[i][1]) {
+                currentMaxY = this.points[i][1];
+            }
+        }
+
+        return {
+            kind: "rect",
+            x: currentMinX,
+            y: currentMinY,
+            width: currentMaxX - currentMinX,
+            height: currentMaxY - currentMinY,
+        };
     }
 }

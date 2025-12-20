@@ -1,4 +1,4 @@
-import { Modes } from "../types";
+import { Bounds, Modes } from "../types";
 import { Shape } from "./base";
 
 export class Line extends Shape {
@@ -82,5 +82,15 @@ export class Line extends Shape {
     updateShape(x: number, y: number): void {
         this.x1 = x;
         this.y1 = y;
+    }
+
+    getBounds(): Bounds {
+        return {
+            kind: "segment",
+            x0: this.x0,
+            y0: this.y0,
+            x1: this.x1,
+            y1: this.y1,
+        };
     }
 }

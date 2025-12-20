@@ -1,4 +1,4 @@
-import { Modes } from "../types";
+import { Bounds, Modes } from "../types";
 
 export abstract class Shape {
     readonly id: string;
@@ -15,4 +15,6 @@ export abstract class Shape {
     abstract hitTest(x: number, y: number, canvas: HTMLCanvasElement): boolean;
 
     abstract updateShape(x: number, y: number): void;
+
+    abstract getBounds(): Bounds;
 }

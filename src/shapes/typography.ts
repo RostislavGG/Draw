@@ -1,4 +1,4 @@
-import { Modes, TextAlign } from "../types";
+import { Bounds, Modes, TextAlign } from "../types";
 import { Shape } from "./base";
 
 export class Typography extends Shape {
@@ -85,4 +85,14 @@ export class Typography extends Shape {
     }
 
     updateShape(x: number, y: number): void {}
+
+    getBounds(): Bounds {
+        return {
+            kind: "rect",
+            x: 0,
+            y: 0,
+            width: 0,
+            height: 0,
+        };
+    }
 }

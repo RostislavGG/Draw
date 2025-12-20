@@ -22,6 +22,11 @@ export const screenToWorld = (
     };
 };
 
+export const worldToScreen = (t: Transformer, x: number, y: number) => ({
+    x: x * t.scale + t.x,
+    y: y * t.scale + t.y,
+});
+
 const clamp = (v: number, min: number, max: number) =>
     Math.min(max, Math.max(min, v));
 

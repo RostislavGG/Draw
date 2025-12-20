@@ -35,6 +35,7 @@ function App() {
 
     const hoveredShape = React.useRef<Shape | null>(null);
     const [selectedShape, setSelectedShape] = React.useState<Shape | null>(null);
+    const selectedShapeRef = React.useRef<Shape>(null)
 
     const backgroundBitmap = React.useRef<ImageBitmap | null>(null);
     const backgroundSize = React.useRef<{ width: number, height: number } | null>(null);
@@ -78,7 +79,7 @@ function App() {
                 shapesList.current = [];
                 hoveredShape.current = null;
                 eraserTrail.current = [];
-                setSelectedShape(null);
+                changeSelectedShape(null)
 
                 if (!canvasRef.current) {
                     return;
@@ -124,7 +125,7 @@ function App() {
                 }
 
                 shapesList.current = shapesList.current.filter(shapes => shapes.id !== selectedShape.id);
-                setSelectedShape(null);
+                changeSelectedShape(null)
                 requestRedraw();
             }
         };
@@ -132,6 +133,12 @@ function App() {
         window.addEventListener('keydown', onKeyDown);
         return () => window.removeEventListener('keydown', onKeyDown)
     }, [textEditingLocation, mode, selectedShape, showInstruments])
+
+    const changeSelectedShape = (newShape: Shape | null) => {
+        setSelectedShape(newShape);
+        selectedShapeRef.current = newShape;
+        requestRedraw();
+    }
 
     const clampViewport = () => {
         if (!canvasRef.current || !backgroundSize.current) return;
@@ -177,7 +184,10 @@ function App() {
     };
 
     const changeMode = (newMode: Modes, selection: Shape | null = null) => {
-        setSelectedShape(selection);
+        if (newMode === mode) {
+            return;
+        }
+        changeSelectedShape(selection)
         setMode(newMode)
     }
 
@@ -194,7 +204,7 @@ function App() {
 
             const now = Date.now();
             pruneTrail(now);
-            redraw(canvasRef.current, viewportTransform.current, shapesList.current, tempShape.current, backgroundBitmap.current, backgroundSize.current, eraserTrail.current, now);
+            redraw(canvasRef.current, viewportTransform.current, shapesList.current, tempShape.current, selectedShapeRef.current, backgroundBitmap.current, backgroundSize.current, eraserTrail.current, now);
 
             if (eraserTrail.current.length > 0) {
                 requestRedraw();
@@ -225,7 +235,7 @@ function App() {
         eraserTrail.current = [];
 
         if (mode === Modes.Select) {
-            setSelectedShape(hoveredShape.current);
+            changeSelectedShape(hoveredShape.current)
             return;
         }
 
