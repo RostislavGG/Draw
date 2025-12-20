@@ -12,10 +12,35 @@
     position: absolute;
     left: 10px;
     top: 100px;
+
     background-color: white;
     border-radius: 16px;
     border: 1px solid lightgray;
     padding: 8px 16px;
+
+    /* animation */
+    will-change: transform, opacity;
+    transition: transform 160ms cubic-bezier(0.2, 0.9, 0.2, 1),
+        opacity 120ms ease;
+}
+
+.instruments-panel.is-open {
+    transform: translateX(0);
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.instruments-panel.is-closed {
+    /* push panel fully outside left edge (panel width + some gap) */
+    transform: translateX(calc(-100% - 24px));
+    opacity: 0;
+    pointer-events: none; /* prevents clicking while hidden */
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .instruments-panel {
+        transition: none;
+    }
 }
 
 .buttons-section {

@@ -76,7 +76,7 @@ function App() {
 
                 stopCapture();
                 window.api.stopDrawing();
-                setIsFocused(false)
+                setIsFocused(false);
                 shapesList.current = [];
                 hoveredShape.current = null;
                 eraserTrail.current = [];
@@ -398,7 +398,7 @@ function App() {
                 onMouseMove={handleMouseMove}
                 onWheel={handleMouseWheel}
             ></canvas>
-            {isFocused && showInstruments && <Instruments currentMode={mode} changeMode={changeMode} shape={selectedShape} shapeOptions={shapeOptions} changeShapeOpts={handleNewOpts} requestRedraw={requestRedraw} />}
+            {<Instruments isOpen={showInstruments && isFocused} currentMode={mode} changeMode={changeMode} shape={selectedShape} shapeOptions={shapeOptions} changeShapeOpts={handleNewOpts} requestRedraw={requestRedraw} />}
             {isFocused && textEditingLocation && <TextEditor key={textEditingLocation.key} anchor={textEditingLocation} initialText="" transform={viewportTransform.current} commit={commitText} cancel={resetTextEditingLocation} color={shapeOptions.strokeColor} bgColor={shapeOptions.fillColor} fontSize={shapeOptions.fontSize} textAlign={shapeOptions.textAlign} opacity={shapeOptions.opacity} />}
         </React.Fragment>
     );

@@ -20,7 +20,7 @@ import { ModesPicker } from "./shape-editors/helpers/modes-picker";
 
 import "./styles.css";
 
-export const Instruments = ({ shape, shapeOptions, currentMode, changeMode, requestRedraw, changeShapeOpts }: { shape: Shape | null, shapeOptions: ShapeOptions, currentMode: Modes, changeMode: (newMode: Modes) => void, requestRedraw: () => void, changeShapeOpts: (newOpts: Partial<ShapeOptions>) => void }) => {
+export const Instruments = ({ isOpen, shape, shapeOptions, currentMode, changeMode, requestRedraw, changeShapeOpts }: { isOpen: boolean, shape: Shape | null, shapeOptions: ShapeOptions, currentMode: Modes, changeMode: (newMode: Modes) => void, requestRedraw: () => void, changeShapeOpts: (newOpts: Partial<ShapeOptions>) => void }) => {
     const handleOptionsChange = (newOpts: Partial<ShapeOptions>) => {
         changeShapeOpts(newOpts)
     }
@@ -82,9 +82,12 @@ export const Instruments = ({ shape, shapeOptions, currentMode, changeMode, requ
 
         return null
     }
-    return <div className='instruments-panel'>
-        <ModesPicker changeMode={changeMode} currentMode={currentMode} />
-        {getShapeEditor()}
-        <p className='footer-text'>Press Space To Hide</p>
-    </div>
+
+    return (
+        <div className={`instruments-panel ${isOpen ? "is-open" : "is-closed"}`}>
+            <ModesPicker changeMode={changeMode} currentMode={currentMode} />
+            {getShapeEditor()}
+            <p className="footer-text">Press Space To Hide</p>
+        </div>
+    );
 }
