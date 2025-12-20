@@ -51,21 +51,32 @@ export class Elipse extends Shape {
         const rx = (right - left) / 2;
         const ry = (bottom - top) / 2;
 
-        ctx.save();
+        const sw = this.strokeWidth ?? 0;
+        const half = sw / 2;
 
+        ctx.save();
         ctx.globalAlpha = this.deletionScheduled
             ? this.opacity / 5
             : this.opacity;
 
-        ctx.beginPath();
-
-        ctx.strokeStyle = this.strokeColor;
-        ctx.lineWidth = this.strokeWidth;
         ctx.fillStyle = this.fillColor;
+        ctx.strokeStyle = this.strokeColor;
+        ctx.lineWidth = sw;
 
-        ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.fill();
+        const frx = Math.max(0, rx - half);
+        const fry = Math.max(0, ry - half);
+
+        if (frx > 0 && fry > 0) {
+            ctx.beginPath();
+            ctx.ellipse(cx, cy, frx, fry, 0, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        if (sw > 0 && rx > 0 && ry > 0) {
+            ctx.beginPath();
+            ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+            ctx.stroke();
+        }
 
         ctx.restore();
     }

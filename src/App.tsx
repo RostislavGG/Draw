@@ -254,10 +254,6 @@ function App() {
             return;
         }
 
-        if (mode !== Modes.Freehand) {
-            changeMode(Modes.Select, tempShape.current)
-        }
-
         shapesList.current = [...shapesList.current, tempShape.current];
         tempShape.current = null;
 

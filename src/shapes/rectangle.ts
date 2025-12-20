@@ -47,6 +47,9 @@ export class Rectangle extends Shape {
         const w = Math.abs(this.x1 - this.x0);
         const h = Math.abs(this.y1 - this.y0);
 
+        const sw = this.strokeWidth ?? 0;
+        const half = sw / 2;
+
         const r = Math.min(w, h) * 0.15;
         const rClamped = Math.min(r, w / 2, h / 2);
 
@@ -54,20 +57,40 @@ export class Rectangle extends Shape {
         ctx.globalAlpha = this.deletionScheduled
             ? this.opacity / 5
             : this.opacity;
-        ctx.beginPath();
-
-        if (this.roundEdges) {
-            ctx.roundRect(x, y, w, h, rClamped);
-        } else {
-            ctx.rect(x, y, w, h);
-        }
 
         ctx.fillStyle = this.fillColor;
-        ctx.lineWidth = this.strokeWidth;
         ctx.strokeStyle = this.strokeColor;
+        ctx.lineWidth = sw;
 
-        ctx.fill();
-        ctx.stroke();
+        const ix = x + half;
+        const iy = y + half;
+        const iw = Math.max(0, w - sw);
+        const ih = Math.max(0, h - sw);
+
+        if (iw > 0 && ih > 0) {
+            ctx.beginPath();
+            if (this.roundEdges) {
+                const ir = Math.max(
+                    0,
+                    Math.min(rClamped - half, iw / 2, ih / 2)
+                );
+                ctx.roundRect(ix, iy, iw, ih, ir);
+            } else {
+                ctx.rect(ix, iy, iw, ih);
+            }
+            ctx.fill();
+        }
+
+        if (sw > 0) {
+            ctx.beginPath();
+            if (this.roundEdges) {
+                ctx.roundRect(x, y, w, h, rClamped);
+            } else {
+                ctx.rect(x, y, w, h);
+            }
+            ctx.stroke();
+        }
+
         ctx.restore();
     }
 
