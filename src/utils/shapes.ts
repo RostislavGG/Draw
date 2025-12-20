@@ -6,9 +6,9 @@ import { Rectangle } from "../shapes/rectangle";
 import { Line } from "../shapes/line";
 import { Arrow } from "../shapes/arrow";
 import { Elipse } from "../shapes/elipse";
+import { Typography } from "../shapes/typography";
 
 import { Modes, ShapeOptions } from "../types";
-import { Typography } from "../shapes/typography";
 
 export const createShape = (
     mode: Modes,

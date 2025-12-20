@@ -57,27 +57,27 @@ export const Instruments = ({ isOpen, shape, shapeOptions, currentMode, changeMo
         }
 
         if (shape.type === Modes.Rectangle) {
-            return <RectangleEditor key={shape.id} rectangle={shape as Rectangle} requestRedraw={requestRedraw} />
+            return <RectangleEditor key={shape.id} rectangle={shape as Rectangle} requestRedraw={requestRedraw} updateDefaultOpts={handleOptionsChange} />
         }
 
         if (shape.type === Modes.Elipse) {
-            return <ElipseEditor key={shape.id} elipse={shape as Elipse} requestRedraw={requestRedraw} />
+            return <ElipseEditor key={shape.id} elipse={shape as Elipse} requestRedraw={requestRedraw} updateDefaultOpts={handleOptionsChange} />
         }
 
         if (shape.type === Modes.Line) {
-            return <LineEditor key={shape.id} line={shape as Line} requestRedraw={requestRedraw} />
+            return <LineEditor key={shape.id} line={shape as Line} requestRedraw={requestRedraw} updateDefaultOpts={handleOptionsChange} />
         }
 
         if (shape.type === Modes.Arrow) {
-            return <ArrowEditor key={shape.id} arrow={shape as Arrow} requestRedraw={requestRedraw} />
+            return <ArrowEditor key={shape.id} arrow={shape as Arrow} requestRedraw={requestRedraw} updateDefaultOpts={handleOptionsChange} />
         }
 
         if (shape.type === Modes.Freehand) {
-            return <FreehandEditor key={shape.id} freehand={shape as Freehand} requestRedraw={requestRedraw} />
+            return <FreehandEditor key={shape.id} freehand={shape as Freehand} requestRedraw={requestRedraw} updateDefaultOpts={handleOptionsChange} />
         }
 
         if (shape.type === Modes.Typography) {
-            return <TypographyEditor key={shape.id} textShape={shape as Typography} requestRedraw={requestRedraw} />
+            return <TypographyEditor key={shape.id} textShape={shape as Typography} requestRedraw={requestRedraw} updateDefaultOpts={handleOptionsChange} />
         }
 
         return null

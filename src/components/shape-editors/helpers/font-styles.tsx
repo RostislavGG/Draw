@@ -1,5 +1,4 @@
 import { FaItalic } from "react-icons/fa6";
-import { FaUnderline } from "react-icons/fa6";
 import { FaA } from "react-icons/fa6";
 import { FaBold } from "react-icons/fa6";
 
