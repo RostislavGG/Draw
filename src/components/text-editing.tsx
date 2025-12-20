@@ -11,6 +11,7 @@ type Props = {
     fontSize: number;
     textAlign: TextAlign;
     opacity: number;
+    instrumentsEl: React.RefObject<HTMLDivElement | null>;
     cancel: () => void;
     commit: (text: string) => void;
 };
@@ -33,12 +34,45 @@ export const TextEditor: React.FC<Props> = ({
     fontSize,
     textAlign,
     opacity,
+    instrumentsEl,
     cancel,
     commit,
 }) => {
     const [text, setText] = React.useState(initialText);
     const textareaRef = React.useRef<HTMLTextAreaElement>(null);
     const cancelledRef = React.useRef(false);
+
+    const doCommit = React.useCallback(() => {
+        if (cancelledRef.current) return;
+        commit(text);
+    }, [commit, text]);
+
+    const doCancel = React.useCallback(() => {
+        cancelledRef.current = true;
+        cancel();
+    }, [cancel]);
+
+    React.useEffect(() => {
+        const onPointerDownCapture = (e: PointerEvent) => {
+            const target = e.target as Node | null;
+            if (!target) return;
+
+            const textarea = textareaRef.current;
+            const instruments = instrumentsEl.current;
+
+            // click inside editor -> keep editing
+            if (textarea && textarea.contains(target)) return;
+
+            // click inside instruments -> keep editing (so you can change style)
+            if (instruments && instruments.contains(target)) return;
+
+            // click anywhere else -> finish editing
+            doCommit();
+        };
+
+        window.addEventListener("pointerdown", onPointerDownCapture, true);
+        return () => window.removeEventListener("pointerdown", onPointerDownCapture, true);
+    }, [doCommit, instrumentsEl]);
 
     // Keep state in sync if the editor is reused with different initial text
     React.useEffect(() => {
@@ -61,16 +95,6 @@ export const TextEditor: React.FC<Props> = ({
         autosize(el);
     }, [text, fontSize, textAlign]);
 
-    const doCommit = React.useCallback(() => {
-        if (cancelledRef.current) return;
-        commit(text);
-    }, [commit, text]);
-
-    const doCancel = React.useCallback(() => {
-        cancelledRef.current = true;
-        cancel();
-    }, [cancel]);
-
     const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         setText(e.target.value);
     };
@@ -90,10 +114,6 @@ export const TextEditor: React.FC<Props> = ({
             textareaRef.current?.blur();
             return;
         }
-    };
-
-    const handleBlur = () => {
-        doCommit();
     };
 
     const style: React.CSSProperties = {
@@ -143,7 +163,6 @@ export const TextEditor: React.FC<Props> = ({
             value={text}
             onChange={handleChange}
             onKeyDown={handleKeyDown}
-            onBlur={handleBlur}
             style={style}
             spellCheck={false}
             aria-label="Text editor"

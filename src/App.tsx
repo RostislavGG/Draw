@@ -21,6 +21,7 @@ import { Modes, SelectGesture, ShapeOptions, TrailPoint } from "./types";
 
 function App() {
     const canvasRef = React.useRef<HTMLCanvasElement>(null);
+    const instrumentsWrapRef = React.useRef<HTMLDivElement>(null);
 
     const [isFocused, setIsFocused] = React.useState(false);
     const [mode, setMode] = React.useState<Modes>(Modes.Select);
@@ -134,6 +135,17 @@ function App() {
         window.addEventListener('keydown', onKeyDown);
         return () => window.removeEventListener('keydown', onKeyDown)
     }, [textEditingLocation, mode, selectedShape, showInstruments])
+
+    React.useEffect(() => {
+        if (!textEditingLocation) {
+            return;
+        }
+
+        requestAnimationFrame(() => {
+            const el = document.querySelector("textarea[aria-label='Text editor']") as HTMLTextAreaElement | null;
+            el?.focus();
+        });
+    }, [shapeOptions, textEditingLocation]);
 
     const changeSelectedShape = (newShape: Shape | null) => {
         setSelectedShape(newShape);
@@ -399,8 +411,18 @@ function App() {
                 onPointerMove={handlePointerMove}
                 onWheel={handleMouseWheel}
             ></canvas>
-            {<Instruments isOpen={showInstruments && isFocused} currentMode={mode} changeMode={changeMode} shape={selectedShape} shapeOptions={shapeOptions} changeShapeOpts={handleNewOpts} requestRedraw={requestRedraw} />}
-            {isFocused && textEditingLocation && <TextEditor key={textEditingLocation.key} anchor={textEditingLocation} initialText="" transform={viewportTransform.current} commit={commitText} cancel={resetTextEditingLocation} color={shapeOptions.strokeColor} bgColor={shapeOptions.fillColor} fontSize={shapeOptions.fontSize} textAlign={shapeOptions.textAlign} opacity={shapeOptions.opacity} />}
+            <div ref={instrumentsWrapRef}>
+                <Instruments
+                    isOpen={showInstruments && isFocused}
+                    currentMode={mode}
+                    changeMode={changeMode}
+                    shape={selectedShape}
+                    shapeOptions={shapeOptions}
+                    changeShapeOpts={handleNewOpts}
+                    requestRedraw={requestRedraw}
+                />
+            </div>
+            {isFocused && textEditingLocation && <TextEditor key={textEditingLocation.key} instrumentsEl={instrumentsWrapRef} anchor={textEditingLocation} initialText="" transform={viewportTransform.current} commit={commitText} cancel={resetTextEditingLocation} color={shapeOptions.strokeColor} bgColor={shapeOptions.fillColor} fontSize={shapeOptions.fontSize} textAlign={shapeOptions.textAlign} opacity={shapeOptions.opacity} />}
         </React.Fragment>
     );
 }
