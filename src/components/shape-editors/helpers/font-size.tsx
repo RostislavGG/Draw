@@ -1,7 +1,7 @@
-
 import { FONT_SIZES } from "../../../constants/font"
+
 import { IconButton } from "./icon-button"
-import { LIcon, MIcon, SIcon, StrokeBoldIcon, StrokeMediumIcon, StrokeSmallIcon, XLIcon } from "./stroke-icons"
+import { LIcon, MIcon, SIcon, XLIcon } from "./stroke-icons"
 
 export const FontSize = (props: { currentSize: number, onChange: (newVal: number) => void }) => {
     return <div className="buttons-section">

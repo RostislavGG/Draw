@@ -1,4 +1,4 @@
-import { ShapeOptions, TextAlign } from "../types";
+import { FontStyle, ShapeOptions, TextAlign } from "../types";
 
 import {
     DEFAULT_FILL_COLOR_OPTIONS,
@@ -12,6 +12,7 @@ export const DEFAULT_INSTRUMENTS_STATE: ShapeOptions = {
     fillColor: DEFAULT_FILL_COLOR_OPTIONS[0],
     strokeWidth: DEAFULT_STROKE_WIDTHS.MEDIUM,
     fontSize: FONT_SIZES.MEDIUM,
+    fontStyle: FontStyle.Normal,
     textAlign: TextAlign.Left,
     opacity: 1,
     roundEdges: false,

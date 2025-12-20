@@ -1,4 +1,5 @@
-import { Bounds, Modes, TextAlign } from "../types";
+import { Bounds, Modes, TextAlign, FontStyle } from "../types";
+
 import { Shape } from "./base";
 
 export class Typography extends Shape {
@@ -12,6 +13,7 @@ export class Typography extends Shape {
     text: string;
     fontSize: number;
     textAlign: TextAlign;
+    fontStyle: FontStyle;
 
     color: string;
     backgroundColor: string;
@@ -25,6 +27,7 @@ export class Typography extends Shape {
         text: string,
         fontSize: number,
         ta: TextAlign,
+        fs: FontStyle,
         color: string,
         bg: string,
         op: number
@@ -37,6 +40,7 @@ export class Typography extends Shape {
         this.text = text;
         this.fontSize = fontSize;
         this.textAlign = ta;
+        this.fontStyle = fs;
         this.color = color;
         this.backgroundColor = bg;
         this.opacity = op;
@@ -64,10 +68,18 @@ export class Typography extends Shape {
             ? this.opacity / 5
             : this.opacity;
 
-        ctx.font = `${this.fontSize}px sans-serif`;
+        let font = `${this.fontSize}px sans-serif`;
+        if (this.fontStyle === FontStyle.Bold) {
+            font = "bold" + " " + font;
+        } else if (this.fontStyle === FontStyle.Italic) {
+            font = "italic" + " " + font;
+        }
+
+        ctx.font = font;
         ctx.fillStyle = this.color;
         ctx.textBaseline = "top";
         ctx.textAlign = this.getTextAlign() as CanvasTextAlign;
+
         ctx.fillText(this.text, this.x, this.y);
 
         ctx.restore();

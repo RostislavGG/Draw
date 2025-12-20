@@ -15,6 +15,7 @@ export type ShapeOptions = {
     fillColor: string;
     fontSize: number;
     textAlign: TextAlign;
+    fontStyle: FontStyle;
     opacity: number;
     roundEdges: boolean;
 };
@@ -29,6 +30,12 @@ export enum TextAlign {
     Left,
     Center,
     Right,
+}
+
+export enum FontStyle {
+    Normal,
+    Italic,
+    Bold,
 }
 
 export type Bounds =

@@ -14,9 +14,9 @@ import { FreehandEditor } from './shape-editors/freehand';
 import { LineEditor } from './shape-editors/line';
 import { RectangleEditor } from './shape-editors/rectangle';
 import { TypographyEditor } from './shape-editors/text';
+import { ModesPicker } from "./shape-editors/helpers/modes-picker";
 
 import { DefaultEditor } from './shape-editors/default-editor';
-import { ModesPicker } from "./shape-editors/helpers/modes-picker";
 
 import "./styles.css";
 
@@ -49,7 +49,7 @@ export const Instruments = ({ isOpen, shape, shapeOptions, currentMode, changeMo
             }
             if (currentMode === Modes.Typography) {
                 return <DefaultEditor options={{
-                    strokeColor: shapeOptions.strokeColor, fillColor: shapeOptions.fillColor, fontSize: shapeOptions.fontSize, textAlign: shapeOptions.textAlign, opacity: shapeOptions.opacity
+                    strokeColor: shapeOptions.strokeColor, fillColor: shapeOptions.fillColor, fontSize: shapeOptions.fontSize, fontStyle: shapeOptions.fontStyle, textAlign: shapeOptions.textAlign, opacity: shapeOptions.opacity
                 }} onChange={handleOptionsChange} />
             }
 

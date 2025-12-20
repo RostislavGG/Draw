@@ -3,12 +3,13 @@ import React from 'react';
 import { DEFAULT_FILL_COLOR_OPTIONS, DEFAULT_STROKE_COLOR_OPTIONS } from '../../constants/colors';
 import { Typography } from '../../shapes/typography';
 
-import { TextAlign } from '../../types';
+import { FontStyle, TextAlign } from '../../types';
 
 import { ColorPicker } from './helpers/color-picker';
 import { Opacity } from './helpers/opacity';
 import { FontSize } from './helpers/font-size';
 import { TextAlign as TextAlignEditor } from './helpers/text-align';
+import { FontStyler } from './helpers/font-styles';
 
 export const TypographyEditor = ({ textShape, requestRedraw }: { textShape: Typography, requestRedraw: () => void }) => {
     const [fontSize, setFontSize] = React.useState(textShape.fontSize);
@@ -16,6 +17,7 @@ export const TypographyEditor = ({ textShape, requestRedraw }: { textShape: Typo
     const [fillColor, setFillColor] = React.useState(textShape.backgroundColor);
     const [opacity, setOpacity] = React.useState(textShape.opacity);
     const [textAlling, setTextAlign] = React.useState(textShape.textAlign);
+    const [fontStyle, setFontStyle] = React.useState(textShape.fontStyle)
 
     const onFontSizeChange = (newSize: number) => {
         setFontSize(newSize);
@@ -47,10 +49,17 @@ export const TypographyEditor = ({ textShape, requestRedraw }: { textShape: Typo
         requestRedraw();
     }
 
+    const onFontStyleChange = (newVal: FontStyle) => {
+        setFontStyle(newVal);
+        textShape.fontStyle = newVal;
+        requestRedraw();
+    }
+
     return <div>
         <ColorPicker colorOptions={DEFAULT_STROKE_COLOR_OPTIONS} currentColor={strokeColor} label="Color" onColorChange={onStrokeColorChange} />
         <ColorPicker colorOptions={DEFAULT_FILL_COLOR_OPTIONS} currentColor={fillColor} label="Background" onColorChange={onFillColorChange} />
         <FontSize currentSize={fontSize} onChange={onFontSizeChange} />
+        <FontStyler currentStyle={fontStyle} onStyleChange={onFontStyleChange} />
         <TextAlignEditor currentAlign={textAlling} onChange={onTextAlignChange} />
         <Opacity currentValue={opacity} onChange={onOpacityChange} />
     </div>

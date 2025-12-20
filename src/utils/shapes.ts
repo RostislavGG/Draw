@@ -86,6 +86,7 @@ export const createTextShape = (
         text,
         options.fontSize,
         options.textAlign,
+        options.fontStyle,
         options.strokeColor,
         options.fillColor,
         options.opacity

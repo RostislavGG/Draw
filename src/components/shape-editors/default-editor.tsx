@@ -1,6 +1,6 @@
 import { DEFAULT_FILL_COLOR_OPTIONS, DEFAULT_STROKE_COLOR_OPTIONS } from '../../constants/colors';
 
-import { ShapeOptions, TextAlign } from '../../types';
+import { FontStyle, ShapeOptions, TextAlign } from '../../types';
 
 import { ColorPicker } from './helpers/color-picker';
 import { StrokeWidth } from './helpers/stroke-width';
@@ -8,6 +8,7 @@ import { Opacity } from './helpers/opacity';
 import { Edges } from './helpers/edges';
 import { FontSize } from './helpers/font-size';
 import { TextAlign as TextAlignEditor } from './helpers/text-align';
+import { FontStyler } from './helpers/font-styles';
 
 export const DefaultEditor = ({ options, onChange }: { options: Partial<ShapeOptions>, onChange: (newOpts: Partial<ShapeOptions>) => void }) => {
     const res = [];
@@ -22,6 +23,10 @@ export const DefaultEditor = ({ options, onChange }: { options: Partial<ShapeOpt
 
     const handleFontSizeChange = (newSize: number) => {
         onChange({ fontSize: newSize })
+    }
+
+    const handleFontStyleChange = (newStyle: FontStyle) => {
+        onChange({ fontStyle: newStyle })
     }
 
     const handleTextAlignChange = (newAlign: TextAlign) => {
@@ -50,6 +55,10 @@ export const DefaultEditor = ({ options, onChange }: { options: Partial<ShapeOpt
 
     if (options.fontSize != null) {
         res.push(<FontSize currentSize={options.fontSize} onChange={handleFontSizeChange} />)
+    }
+
+    if (options.fontStyle != null) {
+        res.push(<FontStyler currentStyle={options.fontStyle} onStyleChange={handleFontStyleChange} />)
     }
 
     if (options.textAlign != null) {
