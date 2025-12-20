@@ -186,8 +186,9 @@ function App() {
         });
     };
 
-    const handleMouseDown = (event: React.MouseEvent<HTMLCanvasElement>) => {
+    const handlePointerDown = (event: React.PointerEvent<HTMLCanvasElement>) => {
         isMouseDown.current = true;
+        event.currentTarget.setPointerCapture(event.pointerId);
 
         if (mode === Modes.Eraser) {
             const now = Date.now();
@@ -221,12 +222,16 @@ function App() {
         }
     };
 
-    const handleMouseUp = (event: React.MouseEvent<HTMLCanvasElement>) => {
+    const handlePointerUp = (event: React.PointerEvent<HTMLCanvasElement>) => {
         isMouseDown.current = false;
 
         if (!canvasRef.current) {
             return;
         }
+
+        try {
+            event.currentTarget.releasePointerCapture(event.pointerId);
+        } catch { }
 
         eraserTrail.current = [];
 
@@ -260,7 +265,7 @@ function App() {
         requestRedraw()
     };
 
-    const handleMouseMove = (event: React.MouseEvent<HTMLCanvasElement>) => {
+    const handlePointerMove = (event: React.PointerEvent<HTMLCanvasElement>) => {
         if (!canvasRef.current || !isFocused) {
             return;
         }
@@ -389,9 +394,9 @@ function App() {
                 ref={canvasRef}
                 height={window.innerHeight}
                 width={window.innerWidth}
-                onMouseDown={handleMouseDown}
-                onMouseUp={handleMouseUp}
-                onMouseMove={handleMouseMove}
+                onPointerDown={handlePointerDown}
+                onPointerUp={handlePointerUp}
+                onPointerMove={handlePointerMove}
                 onWheel={handleMouseWheel}
             ></canvas>
             {<Instruments isOpen={showInstruments && isFocused} currentMode={mode} changeMode={changeMode} shape={selectedShape} shapeOptions={shapeOptions} changeShapeOpts={handleNewOpts} requestRedraw={requestRedraw} />}
