@@ -108,4 +108,11 @@ export class Elipse extends Shape {
             height: maxY - minY,
         };
     }
+
+    translate(dx: number, dy: number): void {
+        this.x0 += dx;
+        this.y0 += dy;
+        this.x1 += dx;
+        this.y1 += dy;
+    }
 }

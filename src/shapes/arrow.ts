@@ -111,4 +111,11 @@ export class Arrow extends Shape {
             y1: this.y1,
         };
     }
+
+    translate(dx: number, dy: number): void {
+        this.x0 += dx;
+        this.y0 += dy;
+        this.x1 += dx;
+        this.y1 += dy;
+    }
 }

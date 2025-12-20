@@ -113,4 +113,8 @@ export class Freehand extends Shape {
             height: currentMaxY - currentMinY,
         };
     }
+
+    translate(dx: number, dy: number): void {
+        this.points = this.points.map((p) => [p[0] + dx, p[1] + dy]);
+    }
 }

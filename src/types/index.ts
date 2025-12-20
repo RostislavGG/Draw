@@ -34,3 +34,19 @@ export enum TextAlign {
 export type Bounds =
     | { kind: "rect"; x: number; y: number; width: number; height: number }
     | { kind: "segment"; x0: number; y0: number; x1: number; y1: number };
+
+export type SelectGesture =
+    | { kind: "none" }
+    | {
+          kind: "pan";
+          startX: number;
+          startY: number;
+          camX: number;
+          camY: number;
+      }
+    | {
+          kind: "drag-shape";
+          shapeId: string;
+          lastWorldX: number;
+          lastWorldY: number;
+      };

@@ -3,20 +3,21 @@ import React from "react";
 import { Insets } from "../electron/types";
 
 import { DEFAULT_INSTRUMENTS_STATE } from "./constants/state";
+import { ERASER_TRAIL_MAX, ERASER_TRAIL_MS } from "./constants/trail";
 
 import { createShape, createTextShape } from "./utils/shapes";
 import { deriveMode } from "./utils/mode";
 import { redraw } from "./utils/drawing";
 import { clampToBackground, screenToWorld, Transformer, ViewInsets } from "./utils/canvas";
 import { captureImage, stopCapture } from "./utils/screenshot";
+import { eraseAlongSegment } from "./utils/erasing";
 
 import { Instruments } from "./components/instruments";
 import { TextEditor } from "./components/text-editing";
 
 import { Shape } from "./shapes/base";
 
-import { Modes, ShapeOptions, TrailPoint } from "./types";
-import { ERASER_TRAIL_MAX, ERASER_TRAIL_MS } from "./constants/trail";
+import { Modes, SelectGesture, ShapeOptions, TrailPoint } from "./types";
 
 function App() {
     const canvasRef = React.useRef<HTMLCanvasElement>(null);
@@ -27,7 +28,8 @@ function App() {
     const textEditExitTime = React.useRef(Date.now())
 
     const isMouseDown = React.useRef(false);
-    const rafId = React.useRef<number | null>(null)
+    const rafId = React.useRef<number | null>(null);
+    const selectGesture = React.useRef<SelectGesture>({ kind: "none" })
 
     const tempShape = React.useRef<Shape>(null);
     const shapesList = React.useRef<Shape[]>([]);
@@ -42,7 +44,6 @@ function App() {
     const viewInsets = React.useRef<ViewInsets>({ left: 0, top: 0, right: 0, bottom: 0 });
 
     const viewportTransform = React.useRef<Transformer>({ scale: 1, x: 0, y: 0 });
-    const panStart = React.useRef<{ x: number, y: number, camX: number, camY: number } | null>(null);
 
     const [showInstruments, setShowInstruments] = React.useState(true);
     const [shapeOptions, setShapeOptions] = React.useState(DEFAULT_INSTRUMENTS_STATE);
@@ -156,33 +157,6 @@ function App() {
         }
     };
 
-    const eraseAlongSegment = (a: { x: number; y: number }, b: { x: number; y: number }) => {
-        if (!canvasRef.current) return;
-
-        const stepWorld = 4 / viewportTransform.current.scale;
-
-        const dx = b.x - a.x;
-        const dy = b.y - a.y;
-        const dist = Math.hypot(dx, dy);
-
-        const steps = Math.max(1, Math.ceil(dist / stepWorld));
-
-        for (let i = 0; i <= steps; i++) {
-            const t = i / steps;
-            const sx = a.x + dx * t;
-            const sy = a.y + dy * t;
-
-            for (let j = shapesList.current.length - 1; j >= 0; j--) {
-                const shape = shapesList.current[j];
-                if (shape.deletionScheduled) continue;
-
-                if (shape.hitTest(sx, sy, canvasRef.current)) {
-                    shape.deletionScheduled = true;
-                }
-            }
-        }
-    };
-
     const changeMode = (newMode: Modes, selection: Shape | null = null) => {
         if (newMode === mode) {
             return;
@@ -218,10 +192,32 @@ function App() {
         if (mode === Modes.Eraser) {
             const now = Date.now();
             eraserTrail.current = [{ x: event.clientX, y: event.clientY, t: now }]
+            return;
         }
 
-        panStart.current = {
-            x: event.clientX, y: event.clientY, camX: viewportTransform.current.x, camY: viewportTransform.current.y
+        const { x, y } = screenToWorld(viewportTransform.current, event.clientX, event.clientY);
+
+        if (mode === Modes.Select) {
+            if (hoveredShape.current) {
+                changeSelectedShape(hoveredShape.current);
+                selectGesture.current = {
+                    kind: "drag-shape",
+                    shapeId: hoveredShape.current.id,
+                    lastWorldX: x,
+                    lastWorldY: y
+                }
+                return;
+            } else {
+                changeSelectedShape(null)
+            }
+
+            selectGesture.current = {
+                kind: "pan",
+                startX: event.clientX,
+                startY: event.clientY,
+                camX: viewportTransform.current.x,
+                camY: viewportTransform.current.y,
+            };
         }
     };
 
@@ -235,7 +231,7 @@ function App() {
         eraserTrail.current = [];
 
         if (mode === Modes.Select) {
-            changeSelectedShape(hoveredShape.current)
+            selectGesture.current = { kind: "none" }
             return;
         }
 
@@ -252,10 +248,6 @@ function App() {
             }
             setTextEditingLocation({ x, y, key: Math.random() });
             return;
-        }
-
-        if (panStart.current) {
-            panStart.current = null;
         }
 
         if (tempShape.current === null) {
@@ -291,7 +283,7 @@ function App() {
                 const a = screenToWorld(viewportTransform.current, p0.x, p0.y);
                 const b = screenToWorld(viewportTransform.current, p1.x, p1.y);
 
-                eraseAlongSegment(a, b);
+                eraseAlongSegment(a, b, canvasRef.current, viewportTransform.current, shapesList.current);
             }
 
             requestRedraw();
@@ -300,13 +292,30 @@ function App() {
 
         canvasRef.current.style.cursor = "default"
 
+        const gesture = selectGesture.current
+
         if (mode === Modes.Select) {
-            if (isMouseDown.current && panStart.current) {
-                viewportTransform.current.x = panStart.current.camX + (event.clientX - panStart.current.x)
-                viewportTransform.current.y = panStart.current.camY + (event.clientY - panStart.current.y)
+            if (gesture.kind === "drag-shape" && isMouseDown.current) {
+                const { x, y } = screenToWorld(viewportTransform.current, event.clientX, event.clientY);
+                const dx = x - gesture.lastWorldX;
+                const dy = y - gesture.lastWorldY;
+
+                const sel = selectedShapeRef.current;
+                if (sel && sel.id === gesture.shapeId) {
+                    sel.translate(dx, dy);
+                    selectGesture.current = { ...gesture, lastWorldX: x, lastWorldY: y };
+                    requestRedraw();
+                }
+                return;
+            }
+
+            if (gesture.kind === "pan") {
+                viewportTransform.current.x = gesture.camX + (event.clientX - gesture.startX)
+                viewportTransform.current.y = gesture.camY + (event.clientY - gesture.startY)
 
                 clampViewport();
                 requestRedraw();
+                return;
             }
 
             for (let i = shapesList.current.length - 1; i >= 0; i--) {

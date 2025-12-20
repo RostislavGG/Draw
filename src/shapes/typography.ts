@@ -95,4 +95,9 @@ export class Typography extends Shape {
             height: 0,
         };
     }
+
+    translate(dx: number, dy: number): void {
+        this.x += dx;
+        this.y += dy;
+    }
 }

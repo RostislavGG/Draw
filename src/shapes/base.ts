@@ -17,4 +17,6 @@ export abstract class Shape {
     abstract updateShape(x: number, y: number): void;
 
     abstract getBounds(): Bounds;
+
+    abstract translate(dx: number, dy: number): void;
 }
