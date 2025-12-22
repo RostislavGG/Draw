@@ -1,6 +1,7 @@
 import React from "react";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 
-import { Insets } from "../electron/types";
+import { onStartDrawing, stopDrawingUiState } from "./tauri-bridge";
 
 import { DEFAULT_INSTRUMENTS_STATE } from "./constants/state";
 import { ERASER_TRAIL_MAX, ERASER_TRAIL_MS } from "./constants/trail";
@@ -8,8 +9,13 @@ import { ERASER_TRAIL_MAX, ERASER_TRAIL_MS } from "./constants/trail";
 import { createShape, createTextShape } from "./utils/shapes";
 import { deriveMode } from "./utils/mode";
 import { redraw } from "./utils/drawing";
-import { clampToBackground, screenToWorld, Transformer, ViewInsets } from "./utils/canvas";
-import { captureImage, stopCapture } from "./utils/screenshot";
+import {
+    clampToBackground,
+    screenToWorld,
+    Transformer,
+    ViewInsets,
+} from "./utils/canvas";
+import { captureImageAt, stopCapture } from "./utils/screenshot";
 import { eraseAlongSegment } from "./utils/erasing";
 
 import { Instruments } from "./components/instruments";
@@ -25,63 +31,118 @@ function App() {
 
     const [isFocused, setIsFocused] = React.useState(false);
     const [mode, setMode] = React.useState<Modes>(Modes.Select);
-    const [textEditingLocation, setTextEditingLocation] = React.useState<{ x: number, y: number, key: number } | null>(null);
-    const textEditExitTime = React.useRef(Date.now())
+    const [textEditingLocation, setTextEditingLocation] = React.useState<{
+        x: number;
+        y: number;
+        key: number;
+    } | null>(null);
+    const textEditExitTime = React.useRef(Date.now());
 
     const isMouseDown = React.useRef(false);
     const rafId = React.useRef<number | null>(null);
-    const selectGesture = React.useRef<SelectGesture>({ kind: "none" })
+    const selectGesture = React.useRef<SelectGesture>({ kind: "none" });
 
     const tempShape = React.useRef<Shape>(null);
     const shapesList = React.useRef<Shape[]>([]);
-    const eraserTrail = React.useRef<TrailPoint[]>([])
+    const eraserTrail = React.useRef<TrailPoint[]>([]);
 
     const hoveredShape = React.useRef<Shape | null>(null);
-    const [selectedShape, setSelectedShape] = React.useState<Shape | null>(null);
-    const selectedShapeRef = React.useRef<Shape>(null)
+    const [selectedShape, setSelectedShape] = React.useState<Shape | null>(
+        null
+    );
+    const selectedShapeRef = React.useRef<Shape>(null);
 
     const backgroundBitmap = React.useRef<ImageBitmap | null>(null);
-    const backgroundSize = React.useRef<{ width: number, height: number } | null>(null);
-    const viewInsets = React.useRef<ViewInsets>({ left: 0, top: 0, right: 0, bottom: 0 });
+    const backgroundSize = React.useRef<{
+        width: number;
+        height: number;
+    } | null>(null);
+    const viewInsets = React.useRef<ViewInsets>({
+        left: 0,
+        top: 0,
+        right: 0,
+        bottom: 0,
+    });
 
-    const viewportTransform = React.useRef<Transformer>({ scale: 1, x: 0, y: 0 });
+    const viewportTransform = React.useRef<Transformer>({
+        scale: 1,
+        x: 0,
+        y: 0,
+    });
 
     const [showInstruments, setShowInstruments] = React.useState(true);
-    const [shapeOptions, setShapeOptions] = React.useState(DEFAULT_INSTRUMENTS_STATE);
+    const [shapeOptions, setShapeOptions] = React.useState(
+        DEFAULT_INSTRUMENTS_STATE
+    );
 
+    const [viewport, setViewport] = React.useState({
+        w: window.innerWidth,
+        h: window.innerHeight,
+    });
     React.useEffect(() => {
-        return window.api.onStartDrawing(async (payload: { insets: Insets, sourceId: string }) => {
-            canvasRef.current!.style.cursor = "none"
-            viewInsets.current = payload.insets ?? { left: 0, top: 0, right: 0, bottom: 0 };
-
-            clampViewport();
-            requestRedraw();
-
-            const bitmap = await captureImage(payload.sourceId);
-            canvasRef.current!.style.cursor = "auto"
-
-            backgroundBitmap.current = bitmap;
-            backgroundSize.current = { width: bitmap.width, height: bitmap.height };
-            setIsFocused(true)
-            setShowInstruments(true)
-        })
+        const onResize = () =>
+            setViewport({ w: window.innerWidth, h: window.innerHeight });
+        window.addEventListener("resize", onResize);
+        return () => window.removeEventListener("resize", onResize);
     }, []);
 
     React.useEffect(() => {
-        const onKeyDown = (event: KeyboardEvent) => {
+        // listen for start-drawing events
+        let unlisten: null | (() => void) = null;
+
+        (async () => {
+            unlisten = await onStartDrawing(async (payload) => {
+                setIsFocused(true);
+                setShowInstruments(true);
+
+                viewInsets.current = payload.insets ?? {
+                    left: 0,
+                    top: 0,
+                    right: 0,
+                    bottom: 0,
+                };
+                viewportTransform.current = { scale: 1, x: 0, y: 0 };
+                clampViewport();
+                requestRedraw();
+
+                try {
+                    const bmp = await captureImageAt(
+                        payload.cursor.x,
+                        payload.cursor.y
+                    );
+                    backgroundBitmap.current = bmp;
+                    backgroundSize.current = {
+                        width: bmp.width,
+                        height: bmp.height,
+                    };
+                } catch (e) {
+                    backgroundBitmap.current = null;
+                    backgroundSize.current = null;
+                }
+
+                requestRedraw();
+            });
+        })();
+
+        return () => {
+            unlisten?.();
+        };
+    }, []);
+
+    React.useEffect(() => {
+        const onKeyDown = async (event: KeyboardEvent) => {
             if (event.key === "Escape") {
                 if (textEditingLocation) {
-                    resetTextEditingLocation()
+                    resetTextEditingLocation();
                     return;
                 }
 
                 stopCapture();
-                window.api.stopDrawing();
                 setIsFocused(false);
                 shapesList.current = [];
                 hoveredShape.current = null;
                 eraserTrail.current = [];
-                changeSelectedShape(null)
+                changeSelectedShape(null);
 
                 if (!canvasRef.current) {
                     return;
@@ -89,16 +150,17 @@ function App() {
 
                 backgroundBitmap.current = null;
                 backgroundSize.current = null;
-                viewportTransform.current = { scale: 1, x: 0, y: 0 }
+                viewportTransform.current = { scale: 1, x: 0, y: 0 };
 
-                changeMode(Modes.Select)
+                changeMode(Modes.Select);
 
-                requestRedraw()
+                requestRedraw();
+                await stopDrawingUiState();
                 return;
             }
 
             if (event.key === " ") {
-                setShowInstruments((prevValue) => !prevValue)
+                setShowInstruments((prevValue) => !prevValue);
                 return;
             }
 
@@ -115,26 +177,32 @@ function App() {
 
                 shapesList.current = shapesList.current.slice(
                     0,
-                    shapesList.current.length - 1,
+                    shapesList.current.length - 1
                 );
 
                 requestRedraw();
             }
 
             if (event.key === "Backspace") {
-                if (!canvasRef.current || shapesList.current.length === 0 || !selectedShape) {
+                if (
+                    !canvasRef.current ||
+                    shapesList.current.length === 0 ||
+                    !selectedShape
+                ) {
                     return;
                 }
 
-                shapesList.current = shapesList.current.filter(shapes => shapes.id !== selectedShape.id);
-                changeSelectedShape(null)
+                shapesList.current = shapesList.current.filter(
+                    (shapes) => shapes.id !== selectedShape.id
+                );
+                changeSelectedShape(null);
                 requestRedraw();
             }
         };
 
-        window.addEventListener('keydown', onKeyDown);
-        return () => window.removeEventListener('keydown', onKeyDown)
-    }, [textEditingLocation, mode, selectedShape, showInstruments])
+        window.addEventListener("keydown", onKeyDown);
+        return () => window.removeEventListener("keydown", onKeyDown);
+    }, [textEditingLocation, mode, selectedShape, showInstruments]);
 
     React.useEffect(() => {
         if (!textEditingLocation) {
@@ -142,7 +210,9 @@ function App() {
         }
 
         requestAnimationFrame(() => {
-            const el = document.querySelector("textarea[aria-label='Text editor']") as HTMLTextAreaElement | null;
+            const el = document.querySelector(
+                "textarea[aria-label='Text editor']"
+            ) as HTMLTextAreaElement | null;
             el?.focus();
         });
     }, [shapeOptions, textEditingLocation]);
@@ -151,16 +221,24 @@ function App() {
         setSelectedShape(newShape);
         selectedShapeRef.current = newShape;
         requestRedraw();
-    }
+    };
 
     const clampViewport = () => {
         if (!canvasRef.current || !backgroundSize.current) return;
-        clampToBackground(viewportTransform.current, canvasRef.current, backgroundSize.current, viewInsets.current);
+        clampToBackground(
+            viewportTransform.current,
+            canvasRef.current,
+            backgroundSize.current,
+            viewInsets.current
+        );
     };
 
     const pruneTrail = (now: number) => {
         const cutoff = now - ERASER_TRAIL_MS;
-        while (eraserTrail.current.length && eraserTrail.current[0].t < cutoff) {
+        while (
+            eraserTrail.current.length &&
+            eraserTrail.current[0].t < cutoff
+        ) {
             eraserTrail.current.shift();
         }
 
@@ -173,9 +251,9 @@ function App() {
         if (newMode === mode) {
             return;
         }
-        changeSelectedShape(selection)
-        setMode(newMode)
-    }
+        changeSelectedShape(selection);
+        setMode(newMode);
+    };
 
     const requestRedraw = () => {
         if (rafId.current != null) {
@@ -190,7 +268,17 @@ function App() {
 
             const now = Date.now();
             pruneTrail(now);
-            redraw(canvasRef.current, viewportTransform.current, shapesList.current, tempShape.current, selectedShapeRef.current, backgroundBitmap.current, backgroundSize.current, eraserTrail.current, now);
+            redraw(
+                canvasRef.current,
+                viewportTransform.current,
+                shapesList.current,
+                tempShape.current,
+                selectedShapeRef.current,
+                backgroundBitmap.current,
+                backgroundSize.current,
+                eraserTrail.current,
+                now
+            );
 
             if (eraserTrail.current.length > 0) {
                 requestRedraw();
@@ -198,17 +286,25 @@ function App() {
         });
     };
 
-    const handlePointerDown = (event: React.PointerEvent<HTMLCanvasElement>) => {
+    const handlePointerDown = (
+        event: React.PointerEvent<HTMLCanvasElement>
+    ) => {
         isMouseDown.current = true;
         event.currentTarget.setPointerCapture(event.pointerId);
 
         if (mode === Modes.Eraser) {
             const now = Date.now();
-            eraserTrail.current = [{ x: event.clientX, y: event.clientY, t: now }]
+            eraserTrail.current = [
+                { x: event.clientX, y: event.clientY, t: now },
+            ];
             return;
         }
 
-        const { x, y } = screenToWorld(viewportTransform.current, event.clientX, event.clientY);
+        const { x, y } = screenToWorld(
+            viewportTransform.current,
+            event.clientX,
+            event.clientY
+        );
 
         if (mode === Modes.Select) {
             if (hoveredShape.current) {
@@ -217,11 +313,11 @@ function App() {
                     kind: "drag-shape",
                     shapeId: hoveredShape.current.id,
                     lastWorldX: x,
-                    lastWorldY: y
-                }
+                    lastWorldY: y,
+                };
                 return;
             } else {
-                changeSelectedShape(null)
+                changeSelectedShape(null);
             }
 
             selectGesture.current = {
@@ -243,24 +339,33 @@ function App() {
 
         try {
             event.currentTarget.releasePointerCapture(event.pointerId);
-        } catch { }
+        } catch {}
 
         eraserTrail.current = [];
 
         if (mode === Modes.Select) {
-            selectGesture.current = { kind: "none" }
+            selectGesture.current = { kind: "none" };
             return;
         }
 
         if (mode === Modes.Eraser) {
-            shapesList.current = shapesList.current.filter(s => !s.deletionScheduled)
-            requestRedraw()
+            shapesList.current = shapesList.current.filter(
+                (s) => !s.deletionScheduled
+            );
+            requestRedraw();
             return;
         }
 
-        const { x, y } = screenToWorld(viewportTransform.current, event.clientX, event.clientY);
+        const { x, y } = screenToWorld(
+            viewportTransform.current,
+            event.clientX,
+            event.clientY
+        );
         if (mode === Modes.Typography) {
-            if (textEditingLocation || Date.now() - textEditExitTime.current < 200) {
+            if (
+                textEditingLocation ||
+                Date.now() - textEditExitTime.current < 200
+            ) {
                 return;
             }
             setTextEditingLocation({ x, y, key: Math.random() });
@@ -274,20 +379,30 @@ function App() {
         shapesList.current = [...shapesList.current, tempShape.current];
         tempShape.current = null;
 
-        requestRedraw()
+        requestRedraw();
     };
 
-    const handlePointerMove = (event: React.PointerEvent<HTMLCanvasElement>) => {
+    const handlePointerMove = (
+        event: React.PointerEvent<HTMLCanvasElement>
+    ) => {
         if (!canvasRef.current || !isFocused) {
             return;
         }
 
-        const { x, y } = screenToWorld(viewportTransform.current, event.clientX, event.clientY);
+        const { x, y } = screenToWorld(
+            viewportTransform.current,
+            event.clientX,
+            event.clientY
+        );
 
         if (mode === Modes.Eraser && isMouseDown.current) {
             const now = Date.now();
-            eraserTrail.current.push({ x: event.clientX, y: event.clientY, t: now });
-            pruneTrail(now)
+            eraserTrail.current.push({
+                x: event.clientX,
+                y: event.clientY,
+                t: now,
+            });
+            pruneTrail(now);
 
             if (eraserTrail.current.length > 1) {
                 const p1 = eraserTrail.current[eraserTrail.current.length - 1];
@@ -296,35 +411,51 @@ function App() {
                 const a = screenToWorld(viewportTransform.current, p0.x, p0.y);
                 const b = screenToWorld(viewportTransform.current, p1.x, p1.y);
 
-                eraseAlongSegment(a, b, canvasRef.current, viewportTransform.current, shapesList.current);
+                eraseAlongSegment(
+                    a,
+                    b,
+                    canvasRef.current,
+                    viewportTransform.current,
+                    shapesList.current
+                );
             }
 
             requestRedraw();
             return;
         }
 
-        canvasRef.current.style.cursor = "default"
+        canvasRef.current.style.cursor = "default";
 
-        const gesture = selectGesture.current
+        const gesture = selectGesture.current;
 
         if (mode === Modes.Select) {
             if (gesture.kind === "drag-shape" && isMouseDown.current) {
-                const { x, y } = screenToWorld(viewportTransform.current, event.clientX, event.clientY);
+                const { x, y } = screenToWorld(
+                    viewportTransform.current,
+                    event.clientX,
+                    event.clientY
+                );
                 const dx = x - gesture.lastWorldX;
                 const dy = y - gesture.lastWorldY;
 
                 const sel = selectedShapeRef.current;
                 if (sel && sel.id === gesture.shapeId) {
                     sel.translate(dx, dy);
-                    selectGesture.current = { ...gesture, lastWorldX: x, lastWorldY: y };
+                    selectGesture.current = {
+                        ...gesture,
+                        lastWorldX: x,
+                        lastWorldY: y,
+                    };
                     requestRedraw();
                 }
                 return;
             }
 
             if (gesture.kind === "pan") {
-                viewportTransform.current.x = gesture.camX + (event.clientX - gesture.startX)
-                viewportTransform.current.y = gesture.camY + (event.clientY - gesture.startY)
+                viewportTransform.current.x =
+                    gesture.camX + (event.clientX - gesture.startX);
+                viewportTransform.current.y =
+                    gesture.camY + (event.clientY - gesture.startY);
 
                 clampViewport();
                 requestRedraw();
@@ -333,7 +464,7 @@ function App() {
 
             for (let i = shapesList.current.length - 1; i >= 0; i--) {
                 if (shapesList.current[i].hitTest(x, y, canvasRef.current)) {
-                    canvasRef.current.style.cursor = "pointer"
+                    canvasRef.current.style.cursor = "pointer";
                     hoveredShape.current = shapesList.current[i];
                     return;
                 }
@@ -347,12 +478,12 @@ function App() {
         }
 
         if (tempShape.current) {
-            tempShape.current.updateShape(x, y)
+            tempShape.current.updateShape(x, y);
         } else {
             tempShape.current = createShape(mode, x, y, shapeOptions);
         }
 
-        requestRedraw()
+        requestRedraw();
     };
 
     const handleMouseWheel = (event: React.WheelEvent<HTMLCanvasElement>) => {
@@ -381,7 +512,7 @@ function App() {
 
         clampViewport();
         requestRedraw();
-    }
+    };
 
     const resetTextEditingLocation = () => setTextEditingLocation(null);
     const commitText = (text: string) => {
@@ -391,21 +522,27 @@ function App() {
             return;
         }
 
-        const textShape = createTextShape(textEditingLocation.x, textEditingLocation.y, text, shapeOptions)
-        shapesList.current = [...shapesList.current, textShape]
+        const textShape = createTextShape(
+            textEditingLocation.x,
+            textEditingLocation.y,
+            text,
+            shapeOptions
+        );
+        shapesList.current = [...shapesList.current, textShape];
         requestRedraw();
         resetTextEditingLocation();
-    }
+    };
 
-    const handleNewOpts = (newOpts: Partial<ShapeOptions>) => setShapeOptions(prevOptions => ({ ...prevOptions, ...newOpts }))
+    const handleNewOpts = (newOpts: Partial<ShapeOptions>) =>
+        setShapeOptions((prevOptions) => ({ ...prevOptions, ...newOpts }));
 
     return (
         <React.Fragment>
             <canvas
                 style={{ background: "transparent" }}
                 ref={canvasRef}
-                height={window.innerHeight}
-                width={window.innerWidth}
+                height={viewport.h}
+                width={viewport.w}
                 onPointerDown={handlePointerDown}
                 onPointerUp={handlePointerUp}
                 onPointerMove={handlePointerMove}
@@ -422,7 +559,22 @@ function App() {
                     requestRedraw={requestRedraw}
                 />
             </div>
-            {isFocused && textEditingLocation && <TextEditor key={textEditingLocation.key} instrumentsEl={instrumentsWrapRef} anchor={textEditingLocation} initialText="" transform={viewportTransform.current} commit={commitText} cancel={resetTextEditingLocation} color={shapeOptions.strokeColor} bgColor={shapeOptions.fillColor} fontSize={shapeOptions.fontSize} textAlign={shapeOptions.textAlign} opacity={shapeOptions.opacity} />}
+            {isFocused && textEditingLocation && (
+                <TextEditor
+                    key={textEditingLocation.key}
+                    instrumentsEl={instrumentsWrapRef}
+                    anchor={textEditingLocation}
+                    initialText=''
+                    transform={viewportTransform.current}
+                    commit={commitText}
+                    cancel={resetTextEditingLocation}
+                    color={shapeOptions.strokeColor}
+                    bgColor={shapeOptions.fillColor}
+                    fontSize={shapeOptions.fontSize}
+                    textAlign={shapeOptions.textAlign}
+                    opacity={shapeOptions.opacity}
+                />
+            )}
         </React.Fragment>
     );
 }
