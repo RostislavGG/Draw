@@ -25,6 +25,10 @@ serde_json = "1"
 xcap = "0.8"
 image = "0.25"
 base64 = "0.22"
+glib = "0.20"
+gstreamer = "0.23"
+gstreamer-webrtc = "0.23"
+gstreamer-sdp = "0.23"
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 tauri-plugin-global-shortcut = "2"

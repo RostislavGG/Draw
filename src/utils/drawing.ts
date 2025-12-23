@@ -40,22 +40,6 @@ const clearBoard = (
     );
 };
 
-const drawBackground = (
-    ctx: CanvasRenderingContext2D,
-    backgroundBitmap: ImageBitmap | null,
-    backgroundSize: { width: number; height: number } | null
-) => {
-    if (backgroundBitmap && backgroundSize) {
-        ctx.drawImage(
-            backgroundBitmap,
-            0,
-            0,
-            backgroundSize.width,
-            backgroundSize.height
-        );
-    }
-};
-
 const drawEraserTrail = (
     ctx: CanvasRenderingContext2D,
     trail: TrailPoint[],
@@ -176,8 +160,6 @@ export const redraw = (
     shapesList: Shape[],
     currentShape: Shape | null,
     selectedShape: Shape | null,
-    backgroundBitmap: ImageBitmap | null,
-    backgroundSize: { width: number; height: number } | null,
     eraserTrail: TrailPoint[],
     now: number
 ) => {
@@ -187,7 +169,6 @@ export const redraw = (
     ctx.save();
 
     clearBoard(ctx, canvas.width, canvas.height, transformer);
-    drawBackground(ctx, backgroundBitmap, backgroundSize);
 
     shapesList.forEach((shape) => shape.draw(canvas));
     if (currentShape) {

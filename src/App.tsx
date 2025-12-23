@@ -1,7 +1,10 @@
 import React from "react";
-import { getCurrentWindow } from "@tauri-apps/api/window";
 
-import { onStartDrawing, stopDrawingUiState } from "./tauri-bridge";
+import {
+    onStartDrawing,
+    startDrawingUiState,
+    stopDrawingUiState,
+} from "./tauri-bridge";
 
 import { DEFAULT_INSTRUMENTS_STATE } from "./constants/state";
 import { ERASER_TRAIL_MAX, ERASER_TRAIL_MS } from "./constants/trail";
@@ -9,14 +12,10 @@ import { ERASER_TRAIL_MAX, ERASER_TRAIL_MS } from "./constants/trail";
 import { createShape, createTextShape } from "./utils/shapes";
 import { deriveMode } from "./utils/mode";
 import { redraw } from "./utils/drawing";
-import {
-    clampToBackground,
-    screenToWorld,
-    Transformer,
-    ViewInsets,
-} from "./utils/canvas";
-import { captureImageAt, stopCapture } from "./utils/screenshot";
+import { screenToWorld, Transformer } from "./utils/canvas";
 import { eraseAlongSegment } from "./utils/erasing";
+
+import { startNativeWebRtc } from "./utils/webrtc";
 
 import { Instruments } from "./components/instruments";
 import { TextEditor } from "./components/text-editing";
@@ -52,18 +51,6 @@ function App() {
     );
     const selectedShapeRef = React.useRef<Shape>(null);
 
-    const backgroundBitmap = React.useRef<ImageBitmap | null>(null);
-    const backgroundSize = React.useRef<{
-        width: number;
-        height: number;
-    } | null>(null);
-    const viewInsets = React.useRef<ViewInsets>({
-        left: 0,
-        top: 0,
-        right: 0,
-        bottom: 0,
-    });
-
     const viewportTransform = React.useRef<Transformer>({
         scale: 1,
         x: 0,
@@ -79,6 +66,18 @@ function App() {
         w: window.innerWidth,
         h: window.innerHeight,
     });
+
+    const videoRef = React.useRef<HTMLVideoElement>(null);
+    const stopWebRtcRef = React.useRef<null | (() => Promise<void>)>(null);
+
+    const applyBgTransform = () => {
+        const v = videoRef.current;
+        if (!v) return;
+        const t = viewportTransform.current;
+        v.style.transformOrigin = "0 0";
+        v.style.transform = `matrix(${t.scale}, 0, 0, ${t.scale}, ${t.x}, ${t.y})`;
+    };
+
     React.useEffect(() => {
         const onResize = () =>
             setViewport({ w: window.innerWidth, h: window.innerHeight });
@@ -91,35 +90,20 @@ function App() {
         let unlisten: null | (() => void) = null;
 
         (async () => {
-            unlisten = await onStartDrawing(async (payload) => {
+            unlisten = await onStartDrawing(async () => {
+                await startDrawingUiState();
                 setIsFocused(true);
                 setShowInstruments(true);
 
-                viewInsets.current = payload.insets ?? {
-                    left: 0,
-                    top: 0,
-                    right: 0,
-                    bottom: 0,
-                };
                 viewportTransform.current = { scale: 1, x: 0, y: 0 };
-                clampViewport();
-                requestRedraw();
 
-                try {
-                    const bmp = await captureImageAt(
-                        payload.cursor.x,
-                        payload.cursor.y
+                if (videoRef.current && !stopWebRtcRef.current) {
+                    stopWebRtcRef.current = await startNativeWebRtc(
+                        videoRef.current
                     );
-                    backgroundBitmap.current = bmp;
-                    backgroundSize.current = {
-                        width: bmp.width,
-                        height: bmp.height,
-                    };
-                } catch (e) {
-                    backgroundBitmap.current = null;
-                    backgroundSize.current = null;
                 }
 
+                applyBgTransform();
                 requestRedraw();
             });
         })();
@@ -137,7 +121,6 @@ function App() {
                     return;
                 }
 
-                stopCapture();
                 setIsFocused(false);
                 shapesList.current = [];
                 hoveredShape.current = null;
@@ -148,12 +131,14 @@ function App() {
                     return;
                 }
 
-                backgroundBitmap.current = null;
-                backgroundSize.current = null;
                 viewportTransform.current = { scale: 1, x: 0, y: 0 };
 
                 changeMode(Modes.Select);
 
+                if (stopWebRtcRef.current) {
+                    await stopWebRtcRef.current();
+                    stopWebRtcRef.current = null;
+                }
                 requestRedraw();
                 await stopDrawingUiState();
                 return;
@@ -223,16 +208,6 @@ function App() {
         requestRedraw();
     };
 
-    const clampViewport = () => {
-        if (!canvasRef.current || !backgroundSize.current) return;
-        clampToBackground(
-            viewportTransform.current,
-            canvasRef.current,
-            backgroundSize.current,
-            viewInsets.current
-        );
-    };
-
     const pruneTrail = (now: number) => {
         const cutoff = now - ERASER_TRAIL_MS;
         while (
@@ -274,8 +249,6 @@ function App() {
                 shapesList.current,
                 tempShape.current,
                 selectedShapeRef.current,
-                backgroundBitmap.current,
-                backgroundSize.current,
                 eraserTrail.current,
                 now
             );
@@ -457,7 +430,7 @@ function App() {
                 viewportTransform.current.y =
                     gesture.camY + (event.clientY - gesture.startY);
 
-                clampViewport();
+                applyBgTransform();
                 requestRedraw();
                 return;
             }
@@ -510,7 +483,7 @@ function App() {
         viewportTransform.current.y = event.clientY - wy * newScale;
         viewportTransform.current.scale = newScale;
 
-        clampViewport();
+        applyBgTransform();
         requestRedraw();
     };
 
@@ -538,16 +511,39 @@ function App() {
 
     return (
         <React.Fragment>
-            <canvas
-                style={{ background: "transparent" }}
-                ref={canvasRef}
-                height={viewport.h}
-                width={viewport.w}
-                onPointerDown={handlePointerDown}
-                onPointerUp={handlePointerUp}
-                onPointerMove={handlePointerMove}
-                onWheel={handleMouseWheel}
-            ></canvas>
+            <div style={{ position: "fixed", inset: 0, overflow: "hidden" }}>
+                {/* <video
+                    ref={videoRef}
+                    muted
+                    playsInline
+                    autoPlay
+                    style={{
+                        position: "absolute",
+                        inset: 0,
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                        pointerEvents: "none",
+                        zIndex: 0,
+                    }}
+                /> */}
+                <canvas
+                    ref={canvasRef}
+                    width={viewport.w}
+                    height={viewport.h}
+                    style={{
+                        position: "absolute",
+                        inset: 0,
+                        background: "transparent",
+                        zIndex: 1,
+                        touchAction: "none",
+                    }}
+                    onPointerDown={handlePointerDown}
+                    onPointerUp={handlePointerUp}
+                    onPointerMove={handlePointerMove}
+                    onWheel={handleMouseWheel}
+                />
+            </div>
             <div ref={instrumentsWrapRef}>
                 <Instruments
                     isOpen={showInstruments && isFocused}

@@ -1,28 +1,19 @@
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
 
-export type Insets = {
-    left: number;
-    top: number;
-    right: number;
-    bottom: number;
-};
+export async function startDrawingUiState() {
+    const win = getCurrentWindow();
+    await win.show();
+    await win.setIgnoreCursorEvents(false);
+    await win.setFocusable(true);
+    await win.setFocus();
+}
 
-export type StartDrawingPayload = {
-    insets: Insets;
-    cursor: { x: number; y: number };
-};
-
-export async function onStartDrawing(
-    cb: (payload: StartDrawingPayload) => void
-) {
+export async function onStartDrawing(cb: () => void) {
     const wv = getCurrentWebviewWindow();
-    const unlisten = await wv.listen<StartDrawingPayload>(
-        "start-drawing",
-        (event) => {
-            cb(event.payload);
-        }
-    );
+    const unlisten = await wv.listen("start-drawing", () => {
+        cb();
+    });
     return unlisten;
 }
 
