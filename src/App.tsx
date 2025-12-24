@@ -569,6 +569,7 @@ function App() {
                     fontSize={shapeOptions.fontSize}
                     textAlign={shapeOptions.textAlign}
                     opacity={shapeOptions.opacity}
+                    fontStyle={shapeOptions.fontStyle}
                 />
             )}
         </React.Fragment>

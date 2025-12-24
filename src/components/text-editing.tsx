@@ -1,105 +1,159 @@
-import React from "react";
-import { Transformer } from "../utils/canvas";
-import { TextAlign } from "../types";
+import * as React from "react";
+import { createPortal } from "react-dom";
+
+import type { Transformer } from "../utils/canvas";
+import {
+    cssTextAlign,
+    getFontStyle,
+    isTransparentLike,
+    measureTextWidthPx,
+} from "../utils/typography";
+
+import { FontStyle, TextAlign } from "../types";
+
+type Anchor = { x: number; y: number; key: number };
 
 type Props = {
+    instrumentsEl: React.RefObject<HTMLDivElement | null>;
+    anchor: Anchor;
     initialText: string;
-    anchor: { x: number; y: number };
     transform: Transformer;
+
+    commit: (text: string) => void;
+    cancel: () => void;
+
     color: string;
     bgColor: string;
     fontSize: number;
     textAlign: TextAlign;
+    fontStyle: FontStyle;
     opacity: number;
-    instrumentsEl: React.RefObject<HTMLDivElement | null>;
-    cancel: () => void;
-    commit: (text: string) => void;
 };
 
-/**
- * Excalidraw-ish textarea editor:
- * - autosizes to content (width + height)
- * - supports textAlign
- * - ESC cancels
- * - Ctrl/Cmd+Enter commits
- * - Blur commits (unless it was cancelled)
- * - uses scale from transformer
- */
-export const TextEditor: React.FC<Props> = ({
-    initialText,
-    anchor,
-    transform,
-    color,
-    bgColor,
-    fontSize,
-    textAlign,
-    opacity,
-    instrumentsEl,
-    cancel,
-    commit,
-}) => {
-    const [text, setText] = React.useState(initialText);
-    const textareaRef = React.useRef<HTMLTextAreaElement>(null);
-    const cancelledRef = React.useRef(false);
+const clamp = (v: number, min: number, max: number) =>
+    Math.max(min, Math.min(max, v));
 
-    const doCommit = React.useCallback(() => {
-        if (cancelledRef.current) return;
-        commit(text);
-    }, [commit, text]);
+export function TextEditor(props: Props) {
+    const {
+        instrumentsEl,
+        anchor,
+        initialText,
+        transform,
+        commit,
+        cancel,
+        color,
+        bgColor,
+        fontSize,
+        textAlign,
+        fontStyle,
+        opacity,
+    } = props;
 
-    const doCancel = React.useCallback(() => {
-        cancelledRef.current = true;
-        cancel();
-    }, [cancel]);
+    const [value, setValue] = React.useState(initialText);
+    const taRef = React.useRef<HTMLTextAreaElement | null>(null);
+    const containerRef = React.useRef<HTMLDivElement | null>(null);
+
+    const [size, setSize] = React.useState<{ w: number; h: number }>({
+        w: 24,
+        h: 24,
+    });
+
+    const doneRef = React.useRef(false);
+
+    const doCommit = React.useCallback(
+        (text: string) => {
+            if (doneRef.current) return;
+            doneRef.current = true;
+            commit(text);
+        },
+        [commit]
+    );
 
     React.useEffect(() => {
         const onPointerDownCapture = (e: PointerEvent) => {
             const target = e.target as Node | null;
             if (!target) return;
 
-            const textarea = textareaRef.current;
+            const textarea = taRef.current;
             const instruments = instrumentsEl.current;
 
-            // click inside editor -> keep editing
             if (textarea && textarea.contains(target)) return;
 
-            // click inside instruments -> keep editing (so you can change style)
             if (instruments && instruments.contains(target)) return;
 
-            // click anywhere else -> finish editing
-            doCommit();
+            doCommit(value);
         };
 
         window.addEventListener("pointerdown", onPointerDownCapture, true);
-        return () => window.removeEventListener("pointerdown", onPointerDownCapture, true);
-    }, [doCommit, instrumentsEl]);
+        return () =>
+            window.removeEventListener(
+                "pointerdown",
+                onPointerDownCapture,
+                true
+            );
+    }, [doCommit, instrumentsEl, value]);
 
-    // Keep state in sync if the editor is reused with different initial text
-    React.useEffect(() => {
-        setText(initialText);
-        cancelledRef.current = false;
-    }, [initialText]);
+    const alignCss = cssTextAlign(textAlign);
 
-    React.useEffect(() => {
-        const el = textareaRef.current;
-        if (!el) return;
-        el.focus();
-        el.select();
-        autosize(el);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    const alignShiftX =
+        alignCss === "center"
+            ? -size.w / 2
+            : alignCss === "right"
+            ? -size.w
+            : 0;
+
+    const scale = transform.scale ?? 1;
+    const baseScreenX = transform.x + anchor.x * scale;
+    const baseScreenY = transform.y + anchor.y * scale;
+
+    const screenX = baseScreenX + alignShiftX;
+    const screenY = baseScreenY;
+
+    const fontPx = Math.max(1, Math.round(fontSize * scale));
+    const lineHeightPx = Math.round(fontPx * 1.25);
+    const padPx = Math.max(2, Math.round(4 * scale));
+    const borderRadiusPx = Math.max(2, Math.round(4 * scale));
+
+    const font = `${fontStyle === FontStyle.Italic ? "italic " : ""}${
+        fontStyle === FontStyle.Bold ? "bold " : ""
+    }${fontPx}px sans-serif`;
 
     React.useLayoutEffect(() => {
-        const el = textareaRef.current;
+        const el = taRef.current;
         if (!el) return;
-        autosize(el);
-    }, [text, fontSize, textAlign]);
 
-    const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-        setText(e.target.value);
-    };
+        el.style.font = font;
+        el.style.lineHeight = `${lineHeightPx}px`;
+        el.style.padding = `${padPx}px`;
+        el.style.textAlign = String(cssTextAlign(textAlign));
 
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+        const naturalTextW = measureTextWidthPx(value, font);
+        const naturalW = Math.ceil(naturalTextW + padPx * 2);
+
+        const margin = 12;
+        const maxW = Math.max(80, window.innerWidth - margin * 2);
+        const minW = Math.max(24, Math.ceil(10 * scale));
+
+        const w = clamp(naturalW, minW, maxW);
+
+        el.style.width = `${w}px`;
+        el.style.height = "0px";
+        const h = Math.max(
+            Math.ceil(lineHeightPx + padPx * 2),
+            Math.ceil(el.scrollHeight)
+        );
+
+        el.style.height = `${h}px`;
+        setSize((prev) => (prev.w !== w || prev.h !== h ? { w, h } : prev));
+    }, [value, font, lineHeightPx, padPx, scale, textAlign]);
+
+    const doCancel = React.useCallback(() => {
+        if (doneRef.current) return;
+        doneRef.current = true;
+        cancel();
+    }, [cancel]);
+
+    const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
         e.stopPropagation();
 
         if (e.key === "Escape") {
@@ -107,118 +161,56 @@ export const TextEditor: React.FC<Props> = ({
             doCancel();
             return;
         }
-
-        if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-            e.preventDefault();
-            doCommit();
-            textareaRef.current?.blur();
-            return;
-        }
     };
 
-    const style: React.CSSProperties = {
-        position: "absolute",
-        left: anchor.x,
-        top: anchor.y,
+    const showBg = !isTransparentLike(bgColor);
 
-        transform: `scale(${transform.scale})`,
-        transformOrigin: "top left",
-
-        // sizing is handled by autosize(), these are sane minimums:
-        minWidth: 24,
-        minHeight: Math.ceil(fontSize * 1.35),
-
-        margin: 0,
-
-        background: bgColor,
-        color,
-        fontSize,
-        lineHeight: 1.35,
-        fontFamily:
-            // Excalidraw uses "Virgil" for the hand-drawn look; fall back gracefully
-            `'Virgil', 'Cascadia Code', ui-rounded, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif`,
-
-        textAlign: toCssTextAlign(textAlign),
-        opacity,
-
-        border: "1px solid rgba(0,0,0,0.25)",
-        borderRadius: 8,
-        boxShadow: "0 2px 10px rgba(0,0,0,0.12)",
-
-        outline: "none",
-        resize: "none",
-        overflow: "hidden",
-
-        // Make it feel more like a canvas object editor
-        caretColor: color,
-        letterSpacing: 0,
-
-        // Helps keep consistent look across browsers
-        WebkitAppearance: "none",
-    };
-
-    return (
-        <textarea
-            ref={textareaRef}
-            value={text}
-            onChange={handleChange}
-            onKeyDown={handleKeyDown}
-            style={style}
-            spellCheck={false}
-            aria-label="Text editor"
-        />
+    const editor = (
+        <div
+            ref={containerRef}
+            style={{
+                position: "fixed",
+                left: 0,
+                top: 0,
+                transform: `translate(${screenX}px, ${screenY}px)`,
+                zIndex: 10_000,
+                pointerEvents: "auto",
+            }}
+            onPointerDown={(e) => e.stopPropagation()}
+            onPointerMove={(e) => e.stopPropagation()}
+            onPointerUp={(e) => e.stopPropagation()}
+        >
+            <textarea
+                ref={taRef}
+                aria-label='Text editor'
+                value={value}
+                onChange={(e) => setValue(e.target.value)}
+                onKeyDown={onKeyDown}
+                spellCheck={false}
+                style={{
+                    display: "block",
+                    width: `${size.w}px`,
+                    height: `${size.h}px`,
+                    resize: "none",
+                    overflow: "hidden",
+                    border: "1px solid rgba(0,0,0,0.15)",
+                    outline: "none",
+                    borderRadius: `${borderRadiusPx}px`,
+                    padding: `${padPx}px`,
+                    font,
+                    lineHeight: `${lineHeightPx}px`,
+                    color,
+                    background: showBg ? bgColor : "transparent",
+                    opacity: clamp(opacity, 0, 1),
+                    textAlign: cssTextAlign(textAlign),
+                    whiteSpace: "pre-wrap",
+                    wordBreak: "break-word",
+                    boxShadow: "0 6px 18px rgba(0,0,0,0.10)",
+                    ...getFontStyle(fontStyle),
+                }}
+            />
+        </div>
     );
-};
 
-// --- helpers ---
-
-function toCssTextAlign(align: TextAlign): React.CSSProperties["textAlign"] {
-
-    if (align === TextAlign.Center) return "center";
-    if (align === TextAlign.Right) return "right";
-    return "left";
-}
-
-
-function autosize(el: HTMLTextAreaElement) {
-    el.style.height = "0px";
-    const nextHeight = el.scrollHeight;
-    el.style.height = `${nextHeight}px`;
-
-    const value = el.value ?? "";
-    const lines = value.length ? value.split("\n") : [""];
-    const longest = lines.reduce((a, b) => (b.length > a.length ? b : a), "");
-
-    const measurer = document.createElement("span");
-    measurer.style.position = "absolute";
-    measurer.style.visibility = "hidden";
-    measurer.style.whiteSpace = "pre";
-    measurer.style.fontFamily = getComputedStyle(el).fontFamily;
-    measurer.style.fontSize = getComputedStyle(el).fontSize;
-    measurer.style.letterSpacing = getComputedStyle(el).letterSpacing;
-    measurer.textContent = longest || " ";
-
-    document.body.appendChild(measurer);
-    const measured = measurer.getBoundingClientRect().width;
-    document.body.removeChild(measurer);
-
-    const paddingX =
-        px(getComputedStyle(el).paddingLeft) + px(getComputedStyle(el).paddingRight);
-    const borderX =
-        px(getComputedStyle(el).borderLeftWidth) +
-        px(getComputedStyle(el).borderRightWidth);
-
-    const min = 24;
-    const max = 900;
-    const nextWidth = clamp(Math.ceil(measured + paddingX + borderX), min, max);
-    el.style.width = `${nextWidth}px`;
-}
-
-function px(v: string) {
-    const n = Number.parseFloat(v);
-    return Number.isFinite(n) ? n : 0;
-}
-
-function clamp(n: number, min: number, max: number) {
-    return Math.max(min, Math.min(max, n));
+    return createPortal(editor, document.body);
 }

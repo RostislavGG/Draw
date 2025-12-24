@@ -59,9 +59,7 @@ export class Typography extends Shape {
 
     draw(canvas: HTMLCanvasElement): void {
         const ctx = canvas.getContext("2d");
-        if (!ctx) {
-            return;
-        }
+        if (!ctx) return;
 
         ctx.save();
         ctx.globalAlpha = this.deletionScheduled
@@ -69,42 +67,114 @@ export class Typography extends Shape {
             : this.opacity;
 
         let font = `${this.fontSize}px sans-serif`;
-        if (this.fontStyle === FontStyle.Bold) {
-            font = "bold" + " " + font;
-        } else if (this.fontStyle === FontStyle.Italic) {
-            font = "italic" + " " + font;
-        }
+        if (this.fontStyle === FontStyle.Bold) font = "bold " + font;
+        else if (this.fontStyle === FontStyle.Italic) font = "italic " + font;
 
         ctx.font = font;
-        ctx.fillStyle = this.color;
         ctx.textBaseline = "top";
         ctx.textAlign = this.getTextAlign() as CanvasTextAlign;
 
-        ctx.fillText(this.text, this.x, this.y);
+        const lines = this.text.split("\n");
+        const lineHeight = this.fontSize * 1.25;
+
+        // Measure max line width
+        let maxW = 0;
+        for (const line of lines) {
+            const w = ctx.measureText(line.length ? line : " ").width;
+            if (w > maxW) maxW = w;
+        }
+
+        const textH = lines.length * lineHeight;
+
+        // Padding around background (in canvas pixels)
+        const pad = Math.max(2, Math.round(this.fontSize * 0.2));
+        const bgW = maxW + pad * 2;
+        const bgH = textH + pad * 2;
+
+        // Alignment-aware background X (because x is the text anchor)
+        const bgX =
+            this.textAlign === TextAlign.Center
+                ? this.x - maxW / 2 - pad
+                : this.textAlign === TextAlign.Right
+                ? this.x - maxW - pad
+                : this.x - pad;
+
+        const bgY = this.y - pad;
+
+        // Background + faint rounded border
+        const hasBg =
+            this.backgroundColor &&
+            this.backgroundColor !== "transparent" &&
+            this.backgroundColor !== "none" &&
+            this.backgroundColor !== "rgba(0,0,0,0)";
+
+        if (hasBg) {
+            const r = Math.max(2, Math.round(this.fontSize * 0.25)); // faint roundness
+
+            ctx.beginPath();
+            ctx.roundRect(bgX, bgY, bgW, bgH, r);
+
+            ctx.fillStyle = this.backgroundColor;
+            ctx.fill();
+
+            // subtle border
+            ctx.strokeStyle = "rgba(0,0,0,0.15)";
+            ctx.lineWidth = 1;
+            ctx.stroke();
+        }
+
+        // Text
+        ctx.fillStyle = this.color;
+        for (let i = 0; i < lines.length; i++) {
+            const y = this.y + i * lineHeight;
+            ctx.fillText(lines[i], this.x, y);
+        }
 
         ctx.restore();
 
-        this.width = ctx.measureText(this.text).width;
+        // Store bounds INCLUDING padding so hitTest matches background area
+        this.width = bgW;
+        this.height = bgH;
     }
 
     hitTest(x: number, y: number, canvas: HTMLCanvasElement): boolean {
+        const pad = Math.max(2, Math.round(this.fontSize * 0.2));
+        const bgX =
+            this.textAlign === TextAlign.Center
+                ? this.x - (this.width - pad * 2) / 2 - pad
+                : this.textAlign === TextAlign.Right
+                ? this.x - (this.width - pad * 2) - pad
+                : this.x - pad;
+
+        const bgY = this.y - pad;
+
         return (
-            x >= this.x &&
-            x <= this.x + this.width &&
-            y >= this.y &&
-            y <= this.y + this.height
+            x >= bgX &&
+            x <= bgX + this.width &&
+            y >= bgY &&
+            y <= bgY + this.height
         );
     }
 
     updateShape(x: number, y: number): void {}
 
     getBounds(): Bounds {
+        const pad = Math.max(2, Math.round(this.fontSize * 0.2));
+        const bgX =
+            this.textAlign === TextAlign.Center
+                ? this.x - (this.width - pad * 2) / 2 - pad
+                : this.textAlign === TextAlign.Right
+                ? this.x - (this.width - pad * 2) - pad
+                : this.x - pad;
+
+        const bgY = this.y - pad;
+
         return {
             kind: "rect",
-            x: 0,
-            y: 0,
-            width: 0,
-            height: 0,
+            x: bgX,
+            y: bgY,
+            width: this.width,
+            height: this.height,
         };
     }
 
