@@ -14,9 +14,12 @@ import { FreehandEditor } from "./shape-editors/freehand";
 import { LineEditor } from "./shape-editors/line";
 import { RectangleEditor } from "./shape-editors/rectangle";
 import { TypographyEditor } from "./shape-editors/text";
-import { ModesPicker } from "./shape-editors/helpers/modes-picker";
 
 import { DefaultEditor } from "./shape-editors/default-editor";
+
+import { ModesPicker } from "./modes-picker";
+import { Actions } from "./actions";
+import { Divider } from "./divider";
 
 import "./styles.css";
 
@@ -46,6 +49,7 @@ export const Instruments = ({
             if (currentMode === Modes.Line || currentMode === Modes.Freehand) {
                 return (
                     <DefaultEditor
+                        key={currentMode}
                         options={{
                             strokeColor: shapeOptions.strokeColor,
                             strokeWidth: shapeOptions.strokeWidth,
@@ -58,6 +62,7 @@ export const Instruments = ({
             if (currentMode === Modes.Rectangle) {
                 return (
                     <DefaultEditor
+                        key={currentMode}
                         options={{
                             strokeColor: shapeOptions.strokeColor,
                             strokeWidth: shapeOptions.strokeWidth,
@@ -72,6 +77,7 @@ export const Instruments = ({
             if (currentMode === Modes.Elipse) {
                 return (
                     <DefaultEditor
+                        key={currentMode}
                         options={{
                             strokeColor: shapeOptions.strokeColor,
                             strokeWidth: shapeOptions.strokeWidth,
@@ -85,6 +91,7 @@ export const Instruments = ({
             if (currentMode === Modes.Arrow) {
                 return (
                     <DefaultEditor
+                        key={currentMode}
                         options={{
                             strokeColor: shapeOptions.strokeColor,
                             strokeWidth: shapeOptions.strokeWidth,
@@ -97,6 +104,7 @@ export const Instruments = ({
             if (currentMode === Modes.Typography) {
                 return (
                     <DefaultEditor
+                        key={currentMode}
                         options={{
                             strokeColor: shapeOptions.strokeColor,
                             fillColor: shapeOptions.fillColor,
@@ -187,6 +195,8 @@ export const Instruments = ({
             className={`instruments-panel ${isOpen ? "is-open" : "is-closed"}`}
         >
             <ModesPicker changeMode={changeMode} currentMode={currentMode} />
+            <Divider />
+            <Actions currentMode={currentMode} changeMode={changeMode} />
             {getShapeEditor()}
             <p className='footer-text'>Press Space To Hide</p>
         </div>

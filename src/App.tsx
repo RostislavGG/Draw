@@ -345,6 +345,12 @@ function App() {
             return;
         }
 
+        if (mode === Modes.Screenshot || mode === Modes.Video) {
+            tempShape.current = null;
+            requestRedraw();
+            return;
+        }
+
         const { x, y } = screenToWorld(
             viewportTransform.current,
             event.clientX,
@@ -469,7 +475,11 @@ function App() {
         if (tempShape.current) {
             tempShape.current.updateShape(x, y);
         } else {
-            tempShape.current = createShape(mode, x, y, shapeOptions);
+            const attemptCreateShape = createShape(mode, x, y, shapeOptions);
+
+            if (attemptCreateShape) {
+                tempShape.current = attemptCreateShape;
+            }
         }
 
         requestRedraw();

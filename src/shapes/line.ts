@@ -2,7 +2,7 @@ import { Bounds, Modes } from "../types";
 import { Shape } from "./base";
 
 export class Line extends Shape {
-    readonly type = Modes.Line;
+    type: Modes.Line;
 
     x0: number;
     y0: number;
@@ -16,6 +16,7 @@ export class Line extends Shape {
     opacity: number;
 
     constructor(
+        type: Modes.Line,
         id: string,
         x: number,
         y: number,
@@ -24,6 +25,8 @@ export class Line extends Shape {
         op: number
     ) {
         super(id);
+        this.type = type;
+
         this.x0 = x;
         this.y0 = y;
         this.x1 = x;

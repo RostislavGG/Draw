@@ -42,8 +42,15 @@
     }
 }
 
-.buttons-section {
-    margin-bottom: 16px;
+.divider {
+    background-color: rgb(193, 193, 193);
+    border: none;
+    height: 1px;
+}
+
+.actions-container {
+    display: flex;
+    flex-direction: row;
 }
 
 .title {

@@ -8,7 +8,7 @@ import { makeLaserFillStyle } from "../utils/freehand-colors";
 import { Shape } from "./base";
 
 export class Freehand extends Shape {
-    readonly type = Modes.Freehand;
+    type: Modes.Freehand;
 
     private path: Path2D | null = null;
     points: [number, number][];
@@ -18,6 +18,7 @@ export class Freehand extends Shape {
     opacity: number;
 
     constructor(
+        type: Modes.Freehand,
         id: string,
         x: number,
         y: number,
@@ -26,6 +27,8 @@ export class Freehand extends Shape {
         op: number
     ) {
         super(id);
+        this.type = type;
+
         this.points = [[x, y]];
         this.strokeColor = sc;
         this.strokeWidth = sw;

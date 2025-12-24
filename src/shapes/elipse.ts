@@ -2,7 +2,7 @@ import { Bounds, Modes } from "../types";
 import { Shape } from "./base";
 
 export class Elipse extends Shape {
-    readonly type = Modes.Elipse;
+    type: Modes.Elipse;
 
     x0: number;
     y0: number;
@@ -16,6 +16,7 @@ export class Elipse extends Shape {
     opacity: number;
 
     constructor(
+        type: Modes.Elipse,
         id: string,
         x: number,
         y: number,
@@ -25,6 +26,8 @@ export class Elipse extends Shape {
         op: number
     ) {
         super(id);
+        this.type = type;
+
         this.x0 = x;
         this.y0 = y;
         this.x1 = x;

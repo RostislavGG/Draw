@@ -3,7 +3,7 @@ import { Bounds, Modes, TextAlign, FontStyle } from "../types";
 import { Shape } from "./base";
 
 export class Typography extends Shape {
-    readonly type = Modes.Typography;
+    type: Modes.Typography;
 
     x: number;
     y: number;
@@ -21,6 +21,7 @@ export class Typography extends Shape {
     opacity: number;
 
     constructor(
+        type: Modes.Typography,
         id: string,
         x: number,
         y: number,
@@ -34,6 +35,7 @@ export class Typography extends Shape {
     ) {
         super(id);
 
+        this.type = type;
         this.x = x;
         this.y = y;
         this.height = fontSize;

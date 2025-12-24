@@ -7,6 +7,9 @@ export enum Modes {
     Line,
     Typography,
     Eraser,
+    Forward,
+    Screenshot,
+    Video,
 }
 
 export type ShapeOptions = {
