@@ -103,7 +103,6 @@ function App() {
     }, [viewport.w, viewport.h]);
 
     React.useEffect(() => {
-        // listen for start-drawing events
         let unlisten: null | (() => void) = null;
 
         (async () => {

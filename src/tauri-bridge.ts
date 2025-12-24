@@ -9,10 +9,14 @@ export async function startDrawingUiState() {
     await win.setFocus();
 }
 
-export async function onStartDrawing(cb: () => void) {
+export async function onStartDrawing(cb: () => void | Promise<void>) {
     const wv = getCurrentWebviewWindow();
-    const unlisten = await wv.listen("start-drawing", () => {
-        cb();
+    const unlisten = await wv.listen("start-drawing", async () => {
+        try {
+            await cb();
+        } catch (e) {
+            console.error("start-drawing handler failed", e);
+        }
     });
     return unlisten;
 }
