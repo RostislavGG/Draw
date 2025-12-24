@@ -26,30 +26,32 @@ const clearBoard = (
     ctx: CanvasRenderingContext2D,
     width: number,
     height: number,
-    transformer: Transformer
+    transformer: Transformer,
+    dpr: number
 ) => {
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, width, height);
+
     ctx.setTransform(
-        transformer.scale,
+        transformer.scale * dpr,
         0,
         0,
-        transformer.scale,
-        transformer.x,
-        transformer.y
+        transformer.scale * dpr,
+        transformer.x * dpr,
+        transformer.y * dpr
     );
 };
 
 const drawEraserTrail = (
     ctx: CanvasRenderingContext2D,
     trail: TrailPoint[],
-    now: number
+    dpr: number
 ) => {
     if (trail.length < 2) {
         return;
     }
 
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
     const myPath = getStroke(
         trail.map((t) => [t.x, t.y]),
@@ -86,9 +88,10 @@ const drawHandle = (
 const drawSelectionAroundShape = (
     ctx: CanvasRenderingContext2D,
     shape: Shape,
-    transform: Transformer
+    transform: Transformer,
+    dpr: number
 ) => {
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
     ctx.save();
 
@@ -161,14 +164,14 @@ export const redraw = (
     currentShape: Shape | null,
     selectedShape: Shape | null,
     eraserTrail: TrailPoint[],
-    now: number
+    dpr: number
 ) => {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
     ctx.save();
 
-    clearBoard(ctx, canvas.width, canvas.height, transformer);
+    clearBoard(ctx, canvas.width, canvas.height, transformer, dpr);
 
     shapesList.forEach((shape) => shape.draw(canvas));
     if (currentShape) {
@@ -176,11 +179,11 @@ export const redraw = (
     }
 
     if (selectedShape) {
-        drawSelectionAroundShape(ctx, selectedShape, transformer);
+        drawSelectionAroundShape(ctx, selectedShape, transformer, dpr);
     }
 
     if (eraserTrail.length > 0) {
-        drawEraserTrail(ctx, eraserTrail, now);
+        drawEraserTrail(ctx, eraserTrail, dpr);
     }
 
     ctx.restore();

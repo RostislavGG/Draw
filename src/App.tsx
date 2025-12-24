@@ -51,6 +51,7 @@ function App() {
     );
     const selectedShapeRef = React.useRef<Shape>(null);
 
+    const dprRef = React.useRef<number>(window.devicePixelRatio || 1);
     const viewportTransform = React.useRef<Transformer>({
         scale: 1,
         x: 0,
@@ -84,6 +85,22 @@ function App() {
         window.addEventListener("resize", onResize);
         return () => window.removeEventListener("resize", onResize);
     }, []);
+
+    React.useEffect(() => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+
+        const dpr = window.devicePixelRatio || 1;
+        dprRef.current = dpr;
+
+        canvas.width = Math.round(viewport.w * dpr);
+        canvas.height = Math.round(viewport.h * dpr);
+
+        canvas.style.width = `${viewport.w}px`;
+        canvas.style.height = `${viewport.h}px`;
+
+        requestRedraw();
+    }, [viewport.w, viewport.h]);
 
     React.useEffect(() => {
         // listen for start-drawing events
@@ -250,7 +267,7 @@ function App() {
                 tempShape.current,
                 selectedShapeRef.current,
                 eraserTrail.current,
-                now
+                dprRef.current
             );
 
             if (eraserTrail.current.length > 0) {
