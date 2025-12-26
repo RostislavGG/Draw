@@ -198,7 +198,7 @@ export const Instruments = ({
             <Divider />
             <Actions currentMode={currentMode} changeMode={changeMode} />
             {getShapeEditor()}
-            <p className='footer-text'>Press Space To Hide</p>
+            <p className='footer-text'>Press Tab To Hide</p>
         </div>
     );
 };

@@ -5,6 +5,7 @@ import { Shape } from "../shapes/base";
 import { TrailPoint } from "../types";
 
 import { Transformer, worldToScreen } from "./canvas";
+import { getHandlesForBounds, HANDLE_SIZE_PX } from "./selection";
 
 export const getStrokeString = (stroke: number[][]) => {
     if (!stroke.length) return "";
@@ -82,6 +83,7 @@ const drawHandle = (
     ctx.beginPath();
     ctx.ellipse(cx, cy, r, r, 0, 0, Math.PI * 2);
     ctx.fill();
+    ctx.strokeStyle = "#000000";
     ctx.stroke();
 };
 
@@ -99,7 +101,6 @@ const drawSelectionAroundShape = (
     ctx.strokeStyle = "rgba(80, 162, 255, 0.95)";
 
     const handleStroke = "rgba(238, 238, 238, 1)";
-    const HANDLE_SIZE = 12;
 
     const bounds = shape.getBounds();
 
@@ -116,8 +117,8 @@ const drawSelectionAroundShape = (
         ctx.strokeStyle = handleStroke;
         ctx.fillStyle = handleStroke;
 
-        drawHandle(ctx, a.x, a.y, HANDLE_SIZE);
-        drawHandle(ctx, b.x, b.y, HANDLE_SIZE);
+        drawHandle(ctx, a.x, a.y, HANDLE_SIZE_PX);
+        drawHandle(ctx, b.x, b.y, HANDLE_SIZE_PX);
 
         ctx.restore();
         return;
@@ -139,19 +140,13 @@ const drawSelectionAroundShape = (
     ctx.rect(left, top, right - left, bottom - top);
     ctx.stroke();
 
-    const points = [
-        { x: left, y: top },
-        { x: right, y: top },
-        { x: right, y: bottom },
-        { x: left, y: bottom },
-    ];
-
     ctx.setLineDash([]);
     ctx.strokeStyle = handleStroke;
     ctx.fillStyle = handleStroke;
 
-    for (const pt of points) {
-        drawHandle(ctx, pt.x, pt.y, HANDLE_SIZE);
+    const handles = getHandlesForBounds(bounds, transform);
+    for (const h of handles) {
+        drawHandle(ctx, h.sx, h.sy, HANDLE_SIZE_PX);
     }
 
     ctx.restore();

@@ -14,8 +14,14 @@ import { deriveMode } from "./utils/mode";
 import { redraw } from "./utils/drawing";
 import { screenToWorld, Transformer } from "./utils/canvas";
 import { eraseAlongSegment } from "./utils/erasing";
-
 import { startNativeWebRtc } from "./utils/webrtc";
+import {
+    cursorForRectHandle,
+    getHandlesForBounds,
+    hitTestHandles,
+    hitTestSelectionBorder,
+} from "./utils/selection";
+import { getResizeAnchorWorld } from "./utils/resize";
 
 import { Instruments } from "./components/instruments";
 import { TextEditor } from "./components/text-editing";
@@ -160,7 +166,7 @@ function App() {
                 return;
             }
 
-            if (event.key === " ") {
+            if (event.key === "Tab") {
                 setShowInstruments((prevValue) => !prevValue);
                 return;
             }
@@ -296,6 +302,56 @@ function App() {
         );
 
         if (mode === Modes.Select) {
+            const selected = selectedShapeRef.current;
+            if (selected) {
+                const bounds = selected.getBounds();
+                const handles = getHandlesForBounds(
+                    bounds,
+                    viewportTransform.current
+                );
+                const hit = hitTestHandles(
+                    handles,
+                    event.clientX,
+                    event.clientY
+                );
+
+                if (hit) {
+                    const anchorWorld = getResizeAnchorWorld(bounds, hit.id);
+                    selectGesture.current = {
+                        kind: "resize",
+                        shapeId: selected.id,
+                        handle: hit.id,
+                        startBounds: bounds,
+                        anchorWorld,
+                        startSnapshot: selected.getResizeSnapshot(),
+                    };
+                    return;
+                }
+
+                const borderHandle = hitTestSelectionBorder(
+                    bounds,
+                    viewportTransform.current,
+                    event.clientX,
+                    event.clientY
+                );
+
+                if (borderHandle) {
+                    const anchorWorld = getResizeAnchorWorld(
+                        bounds,
+                        borderHandle
+                    );
+                    selectGesture.current = {
+                        kind: "resize",
+                        shapeId: selected.id,
+                        handle: borderHandle,
+                        startBounds: bounds,
+                        anchorWorld,
+                        startSnapshot: selected.getResizeSnapshot(),
+                    };
+                    return;
+                }
+            }
+
             if (hoveredShape.current) {
                 changeSelectedShape(hoveredShape.current);
                 selectGesture.current = {
@@ -424,6 +480,60 @@ function App() {
         const gesture = selectGesture.current;
 
         if (mode === Modes.Select) {
+            if (!isMouseDown.current) {
+                const sel = selectedShapeRef.current;
+                if (sel) {
+                    const b = sel.getBounds();
+
+                    const handles = getHandlesForBounds(
+                        b,
+                        viewportTransform.current
+                    );
+                    const hitCorner = hitTestHandles(
+                        handles,
+                        event.clientX,
+                        event.clientY
+                    );
+                    if (hitCorner) {
+                        canvasRef.current.style.cursor = hitCorner.cursor;
+                        return;
+                    }
+
+                    const borderHandle = hitTestSelectionBorder(
+                        b,
+                        viewportTransform.current,
+                        event.clientX,
+                        event.clientY
+                    );
+                    if (borderHandle) {
+                        canvasRef.current.style.cursor =
+                            cursorForRectHandle(borderHandle);
+                        return;
+                    }
+                }
+            }
+
+            if (gesture.kind === "resize" && isMouseDown.current) {
+                const { x: wx, y: wy } = screenToWorld(
+                    viewportTransform.current,
+                    event.clientX,
+                    event.clientY
+                );
+
+                const sel = selectedShapeRef.current;
+                if (sel && sel.id === gesture.shapeId) {
+                    sel.resizeFromHandle({
+                        handle: gesture.handle,
+                        pointerWorld: { x: wx, y: wy },
+                        anchorWorld: gesture.anchorWorld,
+                        startBounds: gesture.startBounds,
+                        startSnapshot: gesture.startSnapshot,
+                    });
+                    requestRedraw();
+                }
+                return;
+            }
+
             if (gesture.kind === "drag-shape" && isMouseDown.current) {
                 const { x, y } = screenToWorld(
                     viewportTransform.current,

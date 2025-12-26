@@ -1,4 +1,4 @@
-import { Bounds, Modes } from "../types";
+import { Bounds, Modes, ResizeCtx } from "../types";
 
 export abstract class Shape {
     readonly id: string;
@@ -19,4 +19,10 @@ export abstract class Shape {
     abstract getBounds(): Bounds;
 
     abstract translate(dx: number, dy: number): void;
+
+    getResizeSnapshot(): any {
+        return { bounds: this.getBounds() };
+    }
+
+    resizeFromHandle(_: ResizeCtx): void {}
 }

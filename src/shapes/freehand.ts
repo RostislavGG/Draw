@@ -1,9 +1,10 @@
 import { getStroke } from "perfect-freehand";
 
-import { Bounds, Modes } from "../types";
+import { Bounds, Modes, ResizeCtx } from "../types";
 
 import { getStrokeString } from "../utils/drawing";
 import { makeLaserFillStyle } from "../utils/freehand-colors";
+import { rectBoundsFromHandleDrag } from "../utils/resize";
 
 import { Shape } from "./base";
 
@@ -119,5 +120,36 @@ export class Freehand extends Shape {
 
     translate(dx: number, dy: number): void {
         this.points = this.points.map((p) => [p[0] + dx, p[1] + dy]);
+    }
+
+    getResizeSnapshot() {
+        return {
+            points: this.points.map((p) => [p[0], p[1]] as [number, number]),
+        };
+    }
+
+    resizeFromHandle(ctx: ResizeCtx): void {
+        if (ctx.startBounds.kind !== "rect") return;
+
+        const nb = rectBoundsFromHandleDrag(
+            ctx.startBounds,
+            ctx.handle,
+            ctx.anchorWorld,
+            ctx.pointerWorld
+        );
+
+        const start = ctx.startBounds;
+        const sx = start.width === 0 ? 1 : nb.width / start.width;
+        const sy = start.height === 0 ? 1 : nb.height / start.height;
+
+        const snap = ctx.startSnapshot as { points: [number, number][] };
+
+        const ax = ctx.anchorWorld.x;
+        const ay = ctx.anchorWorld.y;
+
+        this.points = snap.points.map(([x, y]) => [
+            ax + (x - ax) * sx,
+            ay + (y - ay) * sy,
+        ]);
     }
 }

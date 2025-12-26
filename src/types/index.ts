@@ -45,6 +45,19 @@ export type Bounds =
     | { kind: "rect"; x: number; y: number; width: number; height: number }
     | { kind: "segment"; x0: number; y0: number; x1: number; y1: number };
 
+export type RectHandle = "nw" | "n" | "ne" | "e" | "se" | "s" | "sw" | "w";
+
+export type SegmentHandle = "a" | "b";
+
+export type ResizeHandle = RectHandle | SegmentHandle;
+
+export type HandleInfo = {
+    id: ResizeHandle;
+    sx: number;
+    sy: number;
+    cursor: string;
+};
+
 export type SelectGesture =
     | { kind: "none" }
     | {
@@ -59,4 +72,20 @@ export type SelectGesture =
           shapeId: string;
           lastWorldX: number;
           lastWorldY: number;
+      }
+    | {
+          kind: "resize";
+          shapeId: string;
+          handle: ResizeHandle;
+          startBounds: Bounds;
+          anchorWorld: { x: number; y: number };
+          startSnapshot: any;
       };
+
+export type ResizeCtx = {
+    handle: ResizeHandle;
+    pointerWorld: { x: number; y: number };
+    anchorWorld: { x: number; y: number };
+    startBounds: Bounds;
+    startSnapshot: any;
+};

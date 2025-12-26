@@ -1,4 +1,5 @@
-import { Bounds, Modes } from "../types";
+import { Bounds, Modes, ResizeCtx } from "../types";
+import { rectBoundsFromHandleDrag } from "../utils/resize";
 import { Shape } from "./base";
 
 export class Elipse extends Shape {
@@ -128,5 +129,25 @@ export class Elipse extends Shape {
         this.y0 += dy;
         this.x1 += dx;
         this.y1 += dy;
+    }
+
+    resizeFromHandle(ctx: ResizeCtx): void {
+        if (ctx.startBounds.kind !== "rect") return;
+
+        const nb = rectBoundsFromHandleDrag(
+            ctx.startBounds,
+            ctx.handle,
+            ctx.anchorWorld,
+            ctx.pointerWorld
+        );
+
+        this.x0 = nb.x;
+        this.y0 = nb.y;
+        this.x1 = nb.x + nb.width;
+        this.y1 = nb.y + nb.height;
+    }
+
+    getResizeSnapshot() {
+        return { x0: this.x0, y0: this.y0, x1: this.x1, y1: this.y1 };
     }
 }

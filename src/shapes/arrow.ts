@@ -1,4 +1,4 @@
-import { Bounds, Modes } from "../types";
+import { Bounds, Modes, ResizeCtx } from "../types";
 import { Shape } from "./base";
 
 export class Arrow extends Shape {
@@ -119,5 +119,30 @@ export class Arrow extends Shape {
         this.y0 += dy;
         this.x1 += dx;
         this.y1 += dy;
+    }
+
+    getResizeSnapshot() {
+        return { x0: this.x0, y0: this.y0, x1: this.x1, y1: this.y1 };
+    }
+
+    resizeFromHandle(ctx: ResizeCtx): void {
+        const snap = ctx.startSnapshot as {
+            x0: number;
+            y0: number;
+            x1: number;
+            y1: number;
+        };
+
+        if (ctx.handle === "a") {
+            this.x0 = ctx.pointerWorld.x;
+            this.y0 = ctx.pointerWorld.y;
+            this.x1 = snap.x1;
+            this.y1 = snap.y1;
+        } else if (ctx.handle === "b") {
+            this.x1 = ctx.pointerWorld.x;
+            this.y1 = ctx.pointerWorld.y;
+            this.x0 = snap.x0;
+            this.y0 = snap.y0;
+        }
     }
 }

@@ -10,15 +10,15 @@ export const IconButton = (props: {
 }) => {
     return (
         <button
-            type="button"
-            className="icon-button"
+            type='button'
+            className='icon-button'
             title={props.tooltip}
             data-selected={props.selected ? "true" : "false"}
             aria-pressed={props.selected}
             onClick={props.onClick}
+            tabIndex={-1}
         >
-            <props.Icon className="icon-button__icon" />
+            <props.Icon className='icon-button__icon' />
         </button>
     );
 };
-
