@@ -36,9 +36,10 @@ function App() {
 
     const [isFocused, setIsFocused] = React.useState(false);
     const [mode, setMode] = React.useState<Modes>(Modes.Select);
-    const [textEditingLocation, setTextEditingLocation] = React.useState<{
+    const [textEditingData, setTextEditingData] = React.useState<{
         x: number;
         y: number;
+        text: string;
         key: number;
     } | null>(null);
     const textEditExitTime = React.useRef(Date.now());
@@ -138,7 +139,7 @@ function App() {
     React.useEffect(() => {
         const onKeyDown = async (event: KeyboardEvent) => {
             if (event.key === "Escape") {
-                if (textEditingLocation) {
+                if (textEditingData) {
                     resetTextEditingLocation();
                     return;
                 }
@@ -209,10 +210,10 @@ function App() {
 
         window.addEventListener("keydown", onKeyDown);
         return () => window.removeEventListener("keydown", onKeyDown);
-    }, [textEditingLocation, mode, selectedShape, showInstruments]);
+    }, [textEditingData, mode, selectedShape, showInstruments]);
 
     React.useEffect(() => {
-        if (!textEditingLocation) {
+        if (!textEditingData) {
             return;
         }
 
@@ -222,7 +223,7 @@ function App() {
             ) as HTMLTextAreaElement | null;
             el?.focus();
         });
-    }, [shapeOptions, textEditingLocation]);
+    }, [shapeOptions, textEditingData]);
 
     const changeSelectedShape = (newShape: Shape | null) => {
         setSelectedShape(newShape);
@@ -414,12 +415,12 @@ function App() {
         );
         if (mode === Modes.Typography) {
             if (
-                textEditingLocation ||
+                textEditingData ||
                 Date.now() - textEditExitTime.current < 200
             ) {
                 return;
             }
-            setTextEditingLocation({ x, y, key: Math.random() });
+            setTextEditingData({ x, y, text: "", key: Math.random() });
             return;
         }
 
@@ -623,17 +624,17 @@ function App() {
         requestRedraw();
     };
 
-    const resetTextEditingLocation = () => setTextEditingLocation(null);
+    const resetTextEditingLocation = () => setTextEditingData(null);
     const commitText = (text: string) => {
         textEditExitTime.current = Date.now();
-        if (text.trim().length === 0 || !textEditingLocation) {
+        if (text.trim().length === 0 || !textEditingData) {
             resetTextEditingLocation();
             return;
         }
 
         const textShape = createTextShape(
-            textEditingLocation.x,
-            textEditingLocation.y,
+            textEditingData.x,
+            textEditingData.y,
             text,
             shapeOptions
         );
@@ -691,12 +692,11 @@ function App() {
                     requestRedraw={requestRedraw}
                 />
             </div>
-            {isFocused && textEditingLocation && (
+            {isFocused && textEditingData && (
                 <TextEditor
-                    key={textEditingLocation.key}
+                    key={textEditingData.key}
                     instrumentsEl={instrumentsWrapRef}
-                    anchor={textEditingLocation}
-                    initialText=''
+                    data={textEditingData}
                     transform={viewportTransform.current}
                     commit={commitText}
                     cancel={resetTextEditingLocation}

@@ -11,12 +11,11 @@ import {
 
 import { FontStyle, TextAlign } from "../types";
 
-type Anchor = { x: number; y: number; key: number };
+type Data = { x: number; y: number; text: string; key: number };
 
 type Props = {
     instrumentsEl: React.RefObject<HTMLDivElement | null>;
-    anchor: Anchor;
-    initialText: string;
+    data: Data;
     transform: Transformer;
 
     commit: (text: string) => void;
@@ -36,8 +35,7 @@ const clamp = (v: number, min: number, max: number) =>
 export function TextEditor(props: Props) {
     const {
         instrumentsEl,
-        anchor,
-        initialText,
+        data,
         transform,
         commit,
         cancel,
@@ -49,16 +47,26 @@ export function TextEditor(props: Props) {
         opacity,
     } = props;
 
-    const [value, setValue] = React.useState(initialText);
+    const [value, setValue] = React.useState(data.text);
     const taRef = React.useRef<HTMLTextAreaElement | null>(null);
-    const containerRef = React.useRef<HTMLDivElement | null>(null);
-
-    const [size, setSize] = React.useState<{ w: number; h: number }>({
-        w: 24,
-        h: 24,
-    });
 
     const doneRef = React.useRef(false);
+    const [isFocused, setIsFocused] = React.useState(false);
+
+    React.useEffect(() => {
+        const id = "te-caret-style";
+        if (document.getElementById(id)) return;
+
+        const style = document.createElement("style");
+        style.id = id;
+        style.textContent = `
+      @keyframes teBlink {
+        0%, 49% { opacity: 1; }
+        50%, 100% { opacity: 0; }
+      }
+    `;
+        document.head.appendChild(style);
+    }, []);
 
     const doCommit = React.useCallback(
         (text: string) => {
@@ -69,6 +77,12 @@ export function TextEditor(props: Props) {
         [commit]
     );
 
+    const doCancel = React.useCallback(() => {
+        if (doneRef.current) return;
+        doneRef.current = true;
+        cancel();
+    }, [cancel]);
+
     React.useEffect(() => {
         const onPointerDownCapture = (e: PointerEvent) => {
             const target = e.target as Node | null;
@@ -78,7 +92,6 @@ export function TextEditor(props: Props) {
             const instruments = instrumentsEl.current;
 
             if (textarea && textarea.contains(target)) return;
-
             if (instruments && instruments.contains(target)) return;
 
             doCommit(value);
@@ -93,65 +106,67 @@ export function TextEditor(props: Props) {
             );
     }, [doCommit, instrumentsEl, value]);
 
-    const alignCss = cssTextAlign(textAlign);
-
-    const alignShiftX =
-        alignCss === "center"
-            ? -size.w / 2
-            : alignCss === "right"
-            ? -size.w
-            : 0;
-
     const scale = transform.scale ?? 1;
-    const baseScreenX = transform.x + anchor.x * scale;
-    const baseScreenY = transform.y + anchor.y * scale;
-
-    const screenX = baseScreenX + alignShiftX;
-    const screenY = baseScreenY;
 
     const fontPx = Math.max(1, Math.round(fontSize * scale));
     const lineHeightPx = Math.round(fontPx * 1.25);
-    const padPx = Math.max(2, Math.round(4 * scale));
-    const borderRadiusPx = Math.max(2, Math.round(4 * scale));
+    const padPx = Math.max(2, Math.round(fontPx * 0.2));
+    const borderRadiusPx = Math.max(2, Math.round(fontPx * 0.25));
 
     const font = `${fontStyle === FontStyle.Italic ? "italic " : ""}${
         fontStyle === FontStyle.Bold ? "bold " : ""
     }${fontPx}px sans-serif`;
 
+    const alignCss = cssTextAlign(textAlign);
+
+    const lines = value.split("\n");
+    const lineCount = Math.max(1, lines.length);
+
+    const maxLineW = Math.max(
+        0,
+        ...lines.map((l) => measureTextWidthPx(l.length ? l : " ", font))
+    );
+
+    const margin = 12;
+    const maxW = Math.max(80, window.innerWidth - margin * 2);
+    const minW = Math.max(24, Math.ceil(10 * scale));
+
+    const bgW = clamp(Math.ceil(maxLineW + padPx * 2), minW, maxW);
+    const textH = Math.ceil(lineCount * lineHeightPx);
+    const bgH = Math.ceil(textH + padPx * 2);
+
+    const innerW = Math.max(1, bgW - padPx * 2);
+    const innerH = Math.max(1, bgH - padPx * 2);
+
+    const baseScreenX = transform.x + data.x * scale;
+    const baseScreenY = transform.y + data.y * scale;
+
+    const alignShiftX =
+        alignCss === "center" ? -bgW / 2 : alignCss === "right" ? -bgW : 0;
+
+    const padCompX =
+        alignCss === "left" ? -padPx : alignCss === "right" ? +padPx : 0;
+
+    const screenX = baseScreenX + alignShiftX + padCompX;
+    const screenY = baseScreenY - padPx;
+
+    const showBg = !isTransparentLike(bgColor);
+
+    const extraLeadingPx = Math.max(0, lineHeightPx - fontPx);
+    const baselineNudgeY = Math.round(extraLeadingPx * 0.2);
+
+    const caretW = Math.max(1, Math.round(1 * scale));
+    const caretH = lineHeightPx;
+
+    const caretInContentX =
+        alignCss === "center" ? innerW / 2 : alignCss === "right" ? innerW : 0;
+
+    const caretX = padPx + caretInContentX;
+    const caretY = padPx - baselineNudgeY;
+
     React.useLayoutEffect(() => {
-        const el = taRef.current;
-        if (!el) return;
-
-        el.style.font = font;
-        el.style.lineHeight = `${lineHeightPx}px`;
-        el.style.padding = `${padPx}px`;
-        el.style.textAlign = String(cssTextAlign(textAlign));
-
-        const naturalTextW = measureTextWidthPx(value, font);
-        const naturalW = Math.ceil(naturalTextW + padPx * 2);
-
-        const margin = 12;
-        const maxW = Math.max(80, window.innerWidth - margin * 2);
-        const minW = Math.max(24, Math.ceil(10 * scale));
-
-        const w = clamp(naturalW, minW, maxW);
-
-        el.style.width = `${w}px`;
-        el.style.height = "0px";
-        const h = Math.max(
-            Math.ceil(lineHeightPx + padPx * 2),
-            Math.ceil(el.scrollHeight)
-        );
-
-        el.style.height = `${h}px`;
-        setSize((prev) => (prev.w !== w || prev.h !== h ? { w, h } : prev));
-    }, [value, font, lineHeightPx, padPx, scale, textAlign]);
-
-    const doCancel = React.useCallback(() => {
-        if (doneRef.current) return;
-        doneRef.current = true;
-        cancel();
-    }, [cancel]);
+        requestAnimationFrame(() => taRef.current?.focus());
+    }, []);
 
     const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
         e.stopPropagation();
@@ -163,11 +178,8 @@ export function TextEditor(props: Props) {
         }
     };
 
-    const showBg = !isTransparentLike(bgColor);
-
     const editor = (
         <div
-            ref={containerRef}
             style={{
                 position: "fixed",
                 left: 0,
@@ -180,35 +192,78 @@ export function TextEditor(props: Props) {
             onPointerMove={(e) => e.stopPropagation()}
             onPointerUp={(e) => e.stopPropagation()}
         >
-            <textarea
-                ref={taRef}
-                aria-label='Text editor'
-                value={value}
-                onChange={(e) => setValue(e.target.value)}
-                onKeyDown={onKeyDown}
-                spellCheck={false}
+            <div
                 style={{
-                    display: "block",
-                    width: `${size.w}px`,
-                    height: `${size.h}px`,
-                    resize: "none",
-                    overflow: "hidden",
-                    border: "1px solid rgba(0,0,0,0.15)",
-                    outline: "none",
-                    borderRadius: `${borderRadiusPx}px`,
+                    position: "relative",
+                    width: `${bgW}px`,
+                    height: `${bgH}px`,
                     padding: `${padPx}px`,
-                    font,
-                    lineHeight: `${lineHeightPx}px`,
-                    color,
+                    boxSizing: "border-box",
+                    borderRadius: `${borderRadiusPx}px`,
                     background: showBg ? bgColor : "transparent",
+
+                    boxShadow: showBg
+                        ? "inset 0 0 0 1px rgba(0,0,0,0.15)"
+                        : "none",
+
                     opacity: clamp(opacity, 0, 1),
-                    textAlign: cssTextAlign(textAlign),
-                    whiteSpace: "pre-wrap",
-                    wordBreak: "break-word",
-                    boxShadow: "0 6px 18px rgba(0,0,0,0.10)",
-                    ...getFontStyle(fontStyle),
                 }}
-            />
+            >
+                {isFocused && value.length === 0 && (
+                    <div
+                        style={{
+                            position: "absolute",
+                            left: `${caretX}px`,
+                            top: `${caretY}px`,
+                            width: `${caretW}px`,
+                            height: `${caretH}px`,
+                            background: color,
+                            animation: "teBlink 1s steps(1, end) infinite",
+                            pointerEvents: "none",
+                        }}
+                    />
+                )}
+
+                <textarea
+                    ref={taRef}
+                    aria-label='Text editor'
+                    value={value}
+                    onChange={(e) => setValue(e.target.value)}
+                    onKeyDown={onKeyDown}
+                    onFocus={() => setIsFocused(true)}
+                    onBlur={() => setIsFocused(false)}
+                    spellCheck={false}
+                    style={{
+                        display: "block",
+                        width: `${innerW}px`,
+                        height: `${innerH}px`,
+                        resize: "none",
+                        overflow: "hidden",
+                        outline: "none",
+                        margin: 0,
+                        padding: 0,
+                        border: "none",
+                        background: "transparent",
+                        boxSizing: "content-box",
+
+                        font,
+                        lineHeight: `${lineHeightPx}px`,
+                        textAlign: alignCss,
+                        color,
+
+                        whiteSpace: "pre-wrap",
+                        wordBreak: "break-word",
+
+                        transform: baselineNudgeY
+                            ? `translateY(-${baselineNudgeY}px)`
+                            : undefined,
+
+                        caretColor: value.length === 0 ? "transparent" : color,
+
+                        ...getFontStyle(fontStyle),
+                    }}
+                />
+            </div>
         </div>
     );
 
