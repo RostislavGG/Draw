@@ -9,6 +9,7 @@ export type UpdateCursorArgs = {
     mode: Modes;
     gesture: SelectGesture;
     isMouseDown: boolean;
+    isEditingText: boolean;
     hitHandleCursor?: CursorName | null;
     hitBorderCursor?: CursorName | null;
     isHoveringShape?: boolean;
@@ -33,6 +34,7 @@ export const updateCanvasCursor = (args: UpdateCursorArgs): CursorName => {
         mode,
         gesture,
         isMouseDown,
+        isEditingText,
         hitHandleCursor = null,
         hitBorderCursor = null,
         isHoveringShape = false,
@@ -46,6 +48,11 @@ export const updateCanvasCursor = (args: UpdateCursorArgs): CursorName => {
     }
 
     if (isShapeDrawingMode(mode)) {
+        if (isEditingText) {
+            canvas.style.cursor = "default";
+            return "default";
+        }
+
         canvas.style.cursor = "none";
         return "none";
     }

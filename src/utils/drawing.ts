@@ -160,9 +160,10 @@ const drawCrosshairCursor = (
     cursorWorld: { x: number; y: number },
     mode: Modes,
     color: string,
-    isVisible: boolean
+    isVisible: boolean,
+    isEditingText: boolean
 ) => {
-    if (!isVisible) return;
+    if (!isVisible || isEditingText) return;
 
     if (!isShapeDrawingMode(mode)) {
         return;
@@ -207,7 +208,8 @@ export const redraw = (
     mode: Modes,
     cursorPos: { x: number; y: number },
     cursorColor: string,
-    cursorVisible: boolean
+    cursorVisible: boolean,
+    isEditingText: boolean
 ) => {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
@@ -236,7 +238,8 @@ export const redraw = (
         cursorPos,
         mode,
         cursorColor,
-        cursorVisible
+        cursorVisible,
+        isEditingText
     );
 
     ctx.restore();

@@ -110,6 +110,7 @@ function App() {
             mode,
             gesture: selectGesture.current,
             isMouseDown: isMouseDown.current,
+            isEditingText: textEditingData != null,
             hitHandleCursor: args?.hitHandleCursor ?? null,
             hitBorderCursor: args?.hitBorderCursor ?? null,
             isHoveringShape: args?.isHoveringShape ?? false,
@@ -332,7 +333,8 @@ function App() {
                 mode,
                 cursorPos.current,
                 shapeOptions.strokeColor,
-                canvasCursorVisible.current
+                canvasCursorVisible.current,
+                textEditingData != null
             );
 
             if (eraserTrail.current.length > 0) requestRedraw();
