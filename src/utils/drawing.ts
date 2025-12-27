@@ -2,10 +2,11 @@ import { getStroke } from "perfect-freehand";
 
 import { Shape } from "../shapes/base";
 
-import { TrailPoint } from "../types";
+import { Modes, TrailPoint } from "../types";
 
 import { Transformer, worldToScreen } from "./canvas";
 import { getHandlesForBounds, HANDLE_SIZE_PX } from "./selection";
+import { isShapeDrawingMode } from "./cursor";
 
 export const getStrokeString = (stroke: number[][]) => {
     if (!stroke.length) return "";
@@ -152,6 +153,49 @@ const drawSelectionAroundShape = (
     ctx.restore();
 };
 
+const drawCrosshairCursor = (
+    ctx: CanvasRenderingContext2D,
+    transform: Transformer,
+    dpr: number,
+    cursorWorld: { x: number; y: number },
+    mode: Modes,
+    color: string,
+    isVisible: boolean
+) => {
+    if (!isVisible) return;
+
+    if (!isShapeDrawingMode(mode)) {
+        return;
+    }
+
+    const s = worldToScreen(transform, cursorWorld.x, cursorWorld.y);
+
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    if (mode === Modes.Eraser) {
+        ctx.beginPath();
+        ctx.ellipse(s.x, s.y, 5, 5, 0, 0, Math.PI * 2);
+        ctx.lineWidth = 1;
+        ctx.fillStyle = "#ffffff";
+        ctx.fill();
+        ctx.strokeStyle = "#000000";
+        ctx.stroke();
+        return;
+    }
+
+    const L = 10;
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(s.x - L, s.y);
+    ctx.lineTo(s.x + L, s.y);
+    ctx.moveTo(s.x, s.y - L);
+    ctx.lineTo(s.x, s.y + L);
+    ctx.stroke();
+    ctx.restore();
+};
+
 export const redraw = (
     canvas: HTMLCanvasElement,
     transformer: Transformer,
@@ -159,7 +203,11 @@ export const redraw = (
     currentShape: Shape | null,
     selectedShape: Shape | null,
     eraserTrail: TrailPoint[],
-    dpr: number
+    dpr: number,
+    mode: Modes,
+    cursorPos: { x: number; y: number },
+    cursorColor: string,
+    cursorVisible: boolean
 ) => {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
@@ -180,6 +228,16 @@ export const redraw = (
     if (eraserTrail.length > 0) {
         drawEraserTrail(ctx, eraserTrail, dpr);
     }
+
+    drawCrosshairCursor(
+        ctx,
+        transformer,
+        dpr,
+        cursorPos,
+        mode,
+        cursorColor,
+        cursorVisible
+    );
 
     ctx.restore();
 };
