@@ -7,7 +7,6 @@ import {
 } from "./tauri-bridge";
 
 import { DEFAULT_INSTRUMENTS_STATE } from "./constants/state";
-import { ERASER_TRAIL_MAX, ERASER_TRAIL_MS } from "./constants/trail";
 
 import { Typography } from "./shapes/typography";
 
@@ -15,7 +14,7 @@ import { createShape, createTextShape } from "./utils/shapes";
 import { deriveMode } from "./utils/mode";
 import { redraw } from "./utils/drawing";
 import { screenToWorld, Transformer } from "./utils/canvas";
-import { eraseAlongSegment } from "./utils/erasing";
+import { eraseAlongSegment, pruneTrail } from "./utils/erasing";
 import { startNativeWebRtc } from "./utils/webrtc";
 import {
     cursorForRectHandle,
@@ -215,7 +214,7 @@ function App() {
                 return;
             }
 
-            if (event.key === "Tab") {
+            if (event.key === "`") {
                 setShowInstruments((prevValue) => !prevValue);
                 return;
             }
@@ -285,20 +284,6 @@ function App() {
         syncCursor();
     };
 
-    const pruneTrail = (now: number) => {
-        const cutoff = now - ERASER_TRAIL_MS;
-        while (
-            eraserTrail.current.length &&
-            eraserTrail.current[0].t < cutoff
-        ) {
-            eraserTrail.current.shift();
-        }
-
-        if (eraserTrail.current.length > ERASER_TRAIL_MAX) {
-            eraserTrail.current = eraserTrail.current.slice(-ERASER_TRAIL_MAX);
-        }
-    };
-
     const changeMode = (newMode: Modes, selection: Shape | null = null) => {
         if (newMode === mode) {
             return;
@@ -320,7 +305,7 @@ function App() {
             if (!canvasRef.current) return;
 
             const now = Date.now();
-            pruneTrail(now);
+            pruneTrail(eraserTrail.current, now);
 
             redraw(
                 canvasRef.current,
@@ -386,6 +371,7 @@ function App() {
                         startBounds: bounds,
                         anchorWorld,
                         startSnapshot: selected.getResizeSnapshot(),
+                        cursor: hit.cursor,
                     };
                     syncCursor({
                         hitHandleCursor: hit.cursor,
@@ -414,6 +400,7 @@ function App() {
                         startBounds: bounds,
                         anchorWorld,
                         startSnapshot: selected.getResizeSnapshot(),
+                        cursor: cursorForRectHandle(borderHandle),
                     };
                     syncCursor({
                         hitHandleCursor: null,
@@ -580,7 +567,7 @@ function App() {
                 y: event.clientY,
                 t: now,
             });
-            pruneTrail(now);
+            pruneTrail(eraserTrail.current, now);
 
             if (eraserTrail.current.length > 1) {
                 const p1 = eraserTrail.current[eraserTrail.current.length - 1];

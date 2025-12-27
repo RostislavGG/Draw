@@ -1,4 +1,7 @@
 import { Shape } from "../shapes/base";
+import { ERASER_TRAIL_MAX, ERASER_TRAIL_MS } from "../constants/trail";
+import { TrailPoint } from "../types";
+
 import { Transformer } from "./canvas";
 
 export const eraseAlongSegment = (
@@ -29,5 +32,16 @@ export const eraseAlongSegment = (
                 shape.deletionScheduled = true;
             }
         }
+    }
+};
+
+export const pruneTrail = (eraserTrail: TrailPoint[], now: number) => {
+    const cutoff = now - ERASER_TRAIL_MS;
+    while (eraserTrail.length && eraserTrail[0].t < cutoff) {
+        eraserTrail.shift();
+    }
+
+    if (eraserTrail.length > ERASER_TRAIL_MAX) {
+        eraserTrail = eraserTrail.slice(-ERASER_TRAIL_MAX);
     }
 };

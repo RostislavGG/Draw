@@ -93,6 +93,7 @@ export type SelectGesture =
           startBounds: Bounds;
           anchorWorld: { x: number; y: number };
           startSnapshot: any;
+          cursor: string;
       };
 
 export type ResizeCtx = {

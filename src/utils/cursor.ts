@@ -60,7 +60,11 @@ export const updateCanvasCursor = (args: UpdateCursorArgs): CursorName => {
     if (mode === Modes.Select) {
         if (isMouseDown) {
             if (gesture.kind === "resize") {
-                const c = hitHandleCursor ?? hitBorderCursor ?? "nwse-resize";
+                const c =
+                    hitHandleCursor ??
+                    hitBorderCursor ??
+                    gesture.cursor ??
+                    "default";
                 canvas.style.cursor = c;
                 return c;
             }
