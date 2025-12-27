@@ -9,6 +9,8 @@ import {
 import { DEFAULT_INSTRUMENTS_STATE } from "./constants/state";
 import { ERASER_TRAIL_MAX, ERASER_TRAIL_MS } from "./constants/trail";
 
+import { Typography } from "./shapes/typography";
+
 import { createShape, createTextShape } from "./utils/shapes";
 import { deriveMode } from "./utils/mode";
 import { redraw } from "./utils/drawing";
@@ -28,7 +30,13 @@ import { TextEditor } from "./components/text-editing";
 
 import { Shape } from "./shapes/base";
 
-import { Modes, SelectGesture, ShapeOptions, TrailPoint } from "./types";
+import {
+    Modes,
+    SelectGesture,
+    ShapeOptions,
+    TextData,
+    TrailPoint,
+} from "./types";
 
 function App() {
     const canvasRef = React.useRef<HTMLCanvasElement>(null);
@@ -36,13 +44,10 @@ function App() {
 
     const [isFocused, setIsFocused] = React.useState(false);
     const [mode, setMode] = React.useState<Modes>(Modes.Select);
-    const [textEditingData, setTextEditingData] = React.useState<{
-        x: number;
-        y: number;
-        text: string;
-        key: number;
-    } | null>(null);
+    const [textEditingData, setTextEditingData] =
+        React.useState<TextData | null>(null);
     const textEditExitTime = React.useRef(Date.now());
+    const lastClickOnSelectedText = React.useRef(Date.now());
 
     const isMouseDown = React.useRef(false);
     const rafId = React.useRef<number | null>(null);
@@ -108,6 +113,20 @@ function App() {
 
         requestRedraw();
     }, [viewport.w, viewport.h]);
+
+    React.useEffect(() => {
+        if (mode === Modes.Typography && textEditingData !== null) {
+            setTextEditingData({
+                ...textEditingData,
+                color: shapeOptions.strokeColor,
+                bgColor: shapeOptions.fillColor,
+                fontSize: shapeOptions.fontSize,
+                textAlign: shapeOptions.textAlign,
+                opacity: shapeOptions.opacity,
+                fontStyle: shapeOptions.fontStyle,
+            });
+        }
+    }, [shapeOptions]);
 
     React.useEffect(() => {
         let unlisten: null | (() => void) = null;
@@ -351,6 +370,40 @@ function App() {
                     };
                     return;
                 }
+
+                if (selected.type === Modes.Typography) {
+                    const now = Date.now();
+                    if (now - lastClickOnSelectedText.current < 250) {
+                        shapesList.current = shapesList.current.filter(
+                            (s) => s.id !== selected.id
+                        );
+                        changeMode(Modes.Typography, null);
+                        setTextEditingData({
+                            x: (selected as Typography).x,
+                            y: (selected as Typography).y,
+                            text: (selected as Typography).text,
+                            key: Math.random(),
+                            color: (selected as Typography).color,
+                            bgColor: (selected as Typography).backgroundColor,
+                            fontSize: (selected as Typography).fontSize,
+                            textAlign: (selected as Typography).textAlign,
+                            opacity: (selected as Typography).opacity,
+                            fontStyle: (selected as Typography).fontStyle,
+                        });
+                        setShapeOptions((prev) => ({
+                            ...prev,
+                            strokeColor: (selected as Typography).color,
+                            fillColor: (selected as Typography).backgroundColor,
+                            fontSize: (selected as Typography).fontSize,
+                            textAlign: (selected as Typography).textAlign,
+                            opacity: (selected as Typography).opacity,
+                            fontStyle: (selected as Typography).fontStyle,
+                        }));
+                        return;
+                    } else {
+                        lastClickOnSelectedText.current = now;
+                    }
+                }
             }
 
             if (hoveredShape.current) {
@@ -420,7 +473,18 @@ function App() {
             ) {
                 return;
             }
-            setTextEditingData({ x, y, text: "", key: Math.random() });
+            setTextEditingData({
+                x,
+                y,
+                text: "",
+                key: Math.random(),
+                color: shapeOptions.strokeColor,
+                bgColor: shapeOptions.fillColor,
+                fontSize: shapeOptions.fontSize,
+                textAlign: shapeOptions.textAlign,
+                opacity: shapeOptions.opacity,
+                fontStyle: shapeOptions.fontStyle,
+            });
             return;
         }
 
@@ -700,12 +764,6 @@ function App() {
                     transform={viewportTransform.current}
                     commit={commitText}
                     cancel={resetTextEditingLocation}
-                    color={shapeOptions.strokeColor}
-                    bgColor={shapeOptions.fillColor}
-                    fontSize={shapeOptions.fontSize}
-                    textAlign={shapeOptions.textAlign}
-                    opacity={shapeOptions.opacity}
-                    fontStyle={shapeOptions.fontStyle}
                 />
             )}
         </React.Fragment>

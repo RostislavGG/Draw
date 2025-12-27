@@ -9,43 +9,24 @@ import {
     measureTextWidthPx,
 } from "../utils/typography";
 
-import { FontStyle, TextAlign } from "../types";
-
-type Data = { x: number; y: number; text: string; key: number };
+import { FontStyle, TextData } from "../types";
 
 type Props = {
     instrumentsEl: React.RefObject<HTMLDivElement | null>;
-    data: Data;
+    data: TextData;
     transform: Transformer;
 
     commit: (text: string) => void;
     cancel: () => void;
-
-    color: string;
-    bgColor: string;
-    fontSize: number;
-    textAlign: TextAlign;
-    fontStyle: FontStyle;
-    opacity: number;
 };
 
 const clamp = (v: number, min: number, max: number) =>
     Math.max(min, Math.min(max, v));
 
 export function TextEditor(props: Props) {
-    const {
-        instrumentsEl,
-        data,
-        transform,
-        commit,
-        cancel,
-        color,
-        bgColor,
-        fontSize,
-        textAlign,
-        fontStyle,
-        opacity,
-    } = props;
+    const { instrumentsEl, data, transform, commit, cancel } = props;
+
+    const { color, bgColor, fontSize, textAlign, fontStyle, opacity } = data;
 
     const [value, setValue] = React.useState(data.text);
     const taRef = React.useRef<HTMLTextAreaElement | null>(null);
@@ -165,7 +146,10 @@ export function TextEditor(props: Props) {
     const caretY = padPx - baselineNudgeY;
 
     React.useLayoutEffect(() => {
-        requestAnimationFrame(() => taRef.current?.focus());
+        requestAnimationFrame(() => {
+            taRef.current?.focus();
+            taRef.current?.setSelectionRange(value.length, value.length);
+        });
     }, []);
 
     const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {

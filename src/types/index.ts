@@ -29,6 +29,19 @@ export type TrailPoint = {
     t: number;
 };
 
+export type TextData = {
+    x: number;
+    y: number;
+    text: string;
+    key: number;
+    color: string;
+    bgColor: string;
+    fontSize: number;
+    textAlign: TextAlign;
+    opacity: number;
+    fontStyle: FontStyle;
+};
+
 export enum TextAlign {
     Left,
     Center,
