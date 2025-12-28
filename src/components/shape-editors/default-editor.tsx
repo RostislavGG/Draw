@@ -81,6 +81,7 @@ export const DefaultEditor = ({
     if (options.fontSize != null) {
         res.push(
             <FontSize
+                key='font-size'
                 currentSize={options.fontSize}
                 onChange={handleFontSizeChange}
             />
@@ -90,6 +91,7 @@ export const DefaultEditor = ({
     if (options.fontStyle != null) {
         res.push(
             <FontStyler
+                key='font-style'
                 currentStyle={options.fontStyle}
                 onStyleChange={handleFontStyleChange}
             />
@@ -99,6 +101,7 @@ export const DefaultEditor = ({
     if (options.textAlign != null) {
         res.push(
             <TextAlignEditor
+                key='text-align'
                 currentAlign={options.textAlign}
                 onChange={handleTextAlignChange}
             />
@@ -108,6 +111,7 @@ export const DefaultEditor = ({
     if (options.strokeWidth != null) {
         res.push(
             <StrokeWidth
+                key='stroke-width'
                 currentWidth={options.strokeWidth}
                 onChange={handleStrokeWidthChange}
             />
@@ -116,13 +120,18 @@ export const DefaultEditor = ({
 
     if (options.roundEdges != null) {
         res.push(
-            <Edges rounded={options.roundEdges} onChange={handleEdgesChange} />
+            <Edges
+                key='edges'
+                rounded={options.roundEdges}
+                onChange={handleEdgesChange}
+            />
         );
     }
 
     if (options.opacity != null) {
         res.push(
             <Opacity
+                key='opacity'
                 currentValue={options.opacity}
                 onChange={handleOpacityChange}
             />
