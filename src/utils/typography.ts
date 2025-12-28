@@ -19,11 +19,20 @@ export const isTransparentLike = (color: string) => {
     );
 };
 
-export const measureTextWidthPx = (text: string, font: string) => {
+export const measureTextWidthPx = (
+    text: string,
+    font: string,
+    fontStyle: FontStyle
+) => {
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
     if (!ctx) return 0;
-    ctx.font = font;
+
+    const styledFont = `${fontStyle === FontStyle.Italic ? "italic " : ""}${
+        fontStyle === FontStyle.Bold ? "bold " : ""
+    }${font}`;
+
+    ctx.font = styledFont;
 
     const lines = text.split("\n");
     let max = 0;

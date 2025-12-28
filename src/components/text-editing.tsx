@@ -94,9 +94,7 @@ export function TextEditor(props: Props) {
     const padPx = Math.max(2, Math.round(fontPx * 0.2));
     const borderRadiusPx = Math.max(2, Math.round(fontPx * 0.25));
 
-    const font = `${fontStyle === FontStyle.Italic ? "italic " : ""}${
-        fontStyle === FontStyle.Bold ? "bold " : ""
-    }${fontPx}px sans-serif`;
+    const font = `${fontPx}px sans-serif`;
 
     const alignCss = cssTextAlign(textAlign);
 
@@ -105,7 +103,9 @@ export function TextEditor(props: Props) {
 
     const maxLineW = Math.max(
         0,
-        ...lines.map((l) => measureTextWidthPx(l.length ? l : " ", font))
+        ...lines.map((l) =>
+            measureTextWidthPx(l.length ? l : " ", font, fontStyle)
+        )
     );
 
     const margin = 12;
