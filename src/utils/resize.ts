@@ -36,77 +36,62 @@ export const getResizeAnchorWorld = (bounds: Bounds, handle: ResizeHandle) => {
     }
 };
 
-// returns a normalized rect bounds (width/height >= 0)
 export const rectBoundsFromHandleDrag = (
     start: Extract<Bounds, { kind: "rect" }>,
     handle: ResizeHandle,
     anchor: { x: number; y: number },
-    pointer: { x: number; y: number },
-    minSize = 2
+    pointer: { x: number; y: number }
 ): Extract<Bounds, { kind: "rect" }> => {
-    // Only valid for rect handles
-    // Compute raw corners based on anchor + pointer, then normalize.
-    let left = Math.min(anchor.x, pointer.x);
-    let right = Math.max(anchor.x, pointer.x);
-    let top = Math.min(anchor.y, pointer.y);
-    let bottom = Math.max(anchor.y, pointer.y);
-
-    // Side handles should lock one axis to anchor line
-    // (because for "e"/"w" you want height unchanged, etc.)
     const startX0 = start.x;
     const startY0 = start.y;
     const startX1 = start.x + start.width;
     const startY1 = start.y + start.height;
 
-    if (handle === "n" || handle === "s") {
-        left = startX0;
-        right = startX1;
-        // vertical changes only
-        if (handle === "n") {
-            bottom = startY1;
-            top = pointer.y;
-        } else {
-            top = startY0;
-            bottom = pointer.y;
-        }
-    } else if (handle === "e" || handle === "w") {
-        top = startY0;
-        bottom = startY1;
-        if (handle === "w") {
-            right = startX1;
-            left = pointer.x;
-        } else {
-            left = startX0;
-            right = pointer.x;
-        }
-    } else if (
-        handle === "ne" ||
-        handle === "nw" ||
-        handle === "se" ||
-        handle === "sw"
-    ) {
-        // corners already fine (anchor+pointer)
-    } else {
-        // segment handles shouldn't call this
+    if (handle === "n") {
+        return {
+            kind: "rect",
+            x: startX0,
+            y: pointer.y,
+            width: startX1 - startX0,
+            height: startY1 - pointer.y,
+        };
+    }
+    if (handle === "s") {
+        return {
+            kind: "rect",
+            x: startX0,
+            y: startY0,
+            width: startX1 - startX0,
+            height: pointer.y - startY0,
+        };
+    }
+    if (handle === "e") {
+        return {
+            kind: "rect",
+            x: startX0,
+            y: startY0,
+            width: pointer.x - startX0,
+            height: startY1 - startY0,
+        };
+    }
+    if (handle === "w") {
+        return {
+            kind: "rect",
+            x: pointer.x,
+            y: startY0,
+            width: startX1 - pointer.x,
+            height: startY1 - startY0,
+        };
     }
 
-    // enforce min size
-    if (right - left < minSize) {
-        const mid = (left + right) / 2;
-        left = mid - minSize / 2;
-        right = mid + minSize / 2;
-    }
-    if (bottom - top < minSize) {
-        const mid = (top + bottom) / 2;
-        top = mid - minSize / 2;
-        bottom = mid + minSize / 2;
-    }
+    const isW = handle === "nw" || handle === "sw";
+    const isN = handle === "nw" || handle === "ne";
 
-    return {
-        kind: "rect",
-        x: left,
-        y: top,
-        width: right - left,
-        height: bottom - top,
-    };
+    const x = isW ? pointer.x : anchor.x;
+    const y = isN ? pointer.y : anchor.y;
+
+    const width = isW ? anchor.x - pointer.x : pointer.x - anchor.x;
+    const height = isN ? anchor.y - pointer.y : pointer.y - anchor.y;
+
+    return { kind: "rect", x, y, width, height };
 };
