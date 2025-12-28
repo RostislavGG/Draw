@@ -214,7 +214,7 @@ function App() {
                 return;
             }
 
-            if (event.key === "`") {
+            if (event.key === " ") {
                 setShowInstruments((prevValue) => !prevValue);
                 return;
             }
