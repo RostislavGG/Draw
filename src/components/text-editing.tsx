@@ -9,7 +9,7 @@ import {
     measureTextWidthPx,
 } from "../utils/typography";
 
-import { FontStyle, TextData } from "../types";
+import { TextData } from "../types";
 
 type Props = {
     instrumentsEl: React.RefObject<HTMLDivElement | null>;
@@ -133,7 +133,7 @@ export function TextEditor(props: Props) {
 
     const showBg = !isTransparentLike(bgColor);
 
-    const extraLeadingPx = Math.max(0, lineHeightPx - fontPx);
+    const extraLeadingPx = Math.max(0, Math.round(lineHeightPx - fontPx));
     const baselineNudgeY = Math.round(extraLeadingPx * 0.2);
 
     const caretW = Math.max(1, Math.round(1 * scale));
