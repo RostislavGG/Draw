@@ -107,59 +107,45 @@ function adjustHsl(rgb: RGB, dl: number, ds: number): RGB {
 }
 
 export type LaserOptions = {
-    glowScale?: number; // default 1
-    blend?: GlobalCompositeOperation; // default "source-over" (less neon)
-    // how much to lift lightness for inner/outer glow (smaller = richer, less neon)
-    innerLift?: number; // default 0.10
-    outerLift?: number; // default 0.16
-    // slight saturation tweak so glow stays “rich”
-    innerSat?: number; // default +0.02
-    outerSat?: number; // default +0.01
+    glowScale?: number;
+    blend?: GlobalCompositeOperation;
+    outerLift?: number;
+    outerSat?: number;
 };
 
-export function makeLaserFillStyle(baseColor: string, opts: LaserOptions = {}) {
+export function drawLaserFill(
+    ctx: CanvasRenderingContext2D,
+    path: Path2D,
+    strokeWidth: number,
+    baseColor: string,
+    opacity: number,
+    opts: LaserOptions = {}
+) {
     const glowScale = opts.glowScale ?? 1;
     const blend = opts.blend ?? "source-over";
 
-    const innerLift = opts.innerLift ?? 0.1;
     const outerLift = opts.outerLift ?? 0.16;
 
-    const innerSat = opts.innerSat ?? 0.02;
     const outerSat = opts.outerSat ?? 0.01;
 
     const base = parseColorToRgb(baseColor) ?? { r: 220, g: 0, b: 0 };
 
-    // Glow colors: same hue, slightly lighter, barely more saturated.
-    const inner = adjustHsl(base, innerLift, innerSat);
     const outer = adjustHsl(base, outerLift, outerSat);
 
-    return function drawLaserFill(
-        ctx: CanvasRenderingContext2D,
-        path: Path2D,
-        strokeWidth: number,
-        opacity: number
-    ) {
-        ctx.save();
-        ctx.globalAlpha = clamp01(opacity);
-        ctx.globalCompositeOperation = blend;
+    ctx.save();
+    ctx.globalAlpha = clamp01(opacity);
+    ctx.globalCompositeOperation = blend;
 
-        // Outer glow (richer + less “neon”: smaller blur than before)
-        ctx.shadowColor = rgbCss(outer);
-        ctx.shadowBlur = strokeWidth * 4.5 * glowScale;
-        ctx.fillStyle = rgbCss(outer);
-        ctx.fill(path);
+    // Outer glow
+    ctx.shadowColor = rgbCss(outer);
+    ctx.shadowBlur = strokeWidth * 4.5 * glowScale;
+    ctx.fillStyle = rgbCss(outer);
+    ctx.fill(path);
 
-        // Inner glow
-        ctx.shadowColor = rgbCss(inner);
-        ctx.shadowBlur = strokeWidth * 2.5 * glowScale;
-        ctx.fillStyle = rgbCss(inner);
-        ctx.fill(path);
+    // Core (sharp)
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = rgbCss(base);
+    ctx.fill(path);
 
-        // Core (sharp)
-        ctx.shadowBlur = 0;
-        ctx.fillStyle = rgbCss(base);
-        ctx.fill(path);
-
-        ctx.restore();
-    };
+    ctx.restore();
 }

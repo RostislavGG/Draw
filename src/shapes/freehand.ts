@@ -1,10 +1,12 @@
 import { getStroke } from "perfect-freehand";
 
-import { Bounds, Modes, ResizeCtx } from "../types";
+import { STROKE_WIDTHS } from "../constants/stroke";
 
 import { getStrokeString } from "../utils/drawing";
-import { makeLaserFillStyle } from "../utils/freehand-colors";
+import { drawLaserFill } from "../utils/freehand-colors";
 import { rectBoundsFromHandleDrag } from "../utils/resize";
+
+import { Bounds, Modes, ResizeCtx } from "../types";
 
 import { Shape } from "./base";
 
@@ -36,16 +38,21 @@ export class Freehand extends Shape {
         this.opacity = op;
     }
 
-    draw(canvas: HTMLCanvasElement): void {
-        if (this.points.length === 0) {
-            return;
+    private getGlowScale() {
+        if (this.strokeWidth === STROKE_WIDTHS.SMALL) {
+            return 2.5;
+        } else if (this.strokeWidth === STROKE_WIDTHS.MEDIUM) {
+            return 1.5;
+        } else {
+            return 1;
         }
+    }
+
+    draw(canvas: HTMLCanvasElement): void {
+        if (this.points.length === 0) return;
 
         const ctx = canvas.getContext("2d");
-
-        if (!ctx) {
-            return;
-        }
+        if (!ctx) return;
 
         const myPath = getStroke(this.points, { size: this.strokeWidth * 2 });
         const pathData = getStrokeString(myPath);
@@ -54,14 +61,11 @@ export class Freehand extends Shape {
 
         const op = this.deletionScheduled ? this.opacity / 5 : this.opacity;
 
-        const laserFill = makeLaserFillStyle(this.strokeColor, {
+        drawLaserFill(ctx, path, this.strokeWidth, this.strokeColor, op, {
             blend: "source-over",
-            glowScale: 1,
-            innerLift: 0.1,
-            outerLift: 0.16,
+            glowScale: this.getGlowScale(),
+            outerLift: 0.2,
         });
-
-        laserFill(ctx, path, this.strokeWidth, op);
     }
 
     hitTest(x: number, y: number, canvas: HTMLCanvasElement): boolean {
