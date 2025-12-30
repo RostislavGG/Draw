@@ -10,7 +10,7 @@ import {
 } from "../../../utils/colors";
 import { clamp } from "../../../utils/math";
 
-import "./styles.css";
+import "./color-picker.css";
 
 type ColorPickerProps = {
     currentColor: string;
@@ -278,62 +278,30 @@ export const ColorPicker: React.FC<ColorPickerProps> = (props) => {
     };
 
     return (
-        <div
-            ref={containerRef}
-            style={{
-                position: "absolute",
-                background: "white",
-                border: "1px solid rgba(0,0,0,0.12)",
-                borderRadius: 8,
-                padding: 10,
-                zIndex: 20000,
-                boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
-                userSelect: "none",
-            }}
-        >
+        <div ref={containerRef} className='color-picker-container'>
             <canvas
                 ref={svRef}
+                className='color-picker-sv'
                 onPointerDown={onSVPointerDown}
                 onPointerMove={onSVPointerMove}
-                style={{
-                    display: "block",
-                    borderRadius: 6,
-                    touchAction: "none",
-                    cursor: "crosshair",
-                }}
             />
-            <div style={{ height: 8 }} />
             <canvas
                 ref={hueRef}
+                className='color-picker-hue'
                 onPointerDown={onHuePointerDown}
                 onPointerMove={onHuePointerMove}
-                style={{
-                    display: "block",
-                    borderRadius: 6,
-                    touchAction: "none",
-                    cursor: "pointer",
-                }}
             />
 
-            <div
-                style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 8,
-                    marginTop: 10,
-                }}
-            >
+            <div className='color-picker-hex-input-container'>
                 <div
+                    className='color-picker-hex-preview'
                     style={{
-                        width: 18,
-                        height: 18,
-                        borderRadius: 4,
-                        border: "1px solid rgba(0,0,0,0.12)",
                         background: hexString,
                     }}
                 />
                 <input
                     type='text'
+                    className='color-picker-hex-input'
                     value={hexString}
                     onChange={onHexStringChange}
                     onKeyDownCapture={stopKeyBubbling}
@@ -341,18 +309,16 @@ export const ColorPicker: React.FC<ColorPickerProps> = (props) => {
                     onPasteCapture={stopPasteBubbling}
                     maxLength={7}
                     style={{
-                        fontSize: 12,
-                        opacity: 0.7,
-                        maxWidth: 80,
-                        borderWidth: 1,
                         borderColor: isValidHexString(hexString)
                             ? "transparent"
                             : "red",
                     }}
                 />
-
-                <div style={{ flex: 1 }} />
-                <button type='button' onClick={props.closePicker}>
+                <button
+                    type='button'
+                    className='close-button'
+                    onClick={props.closePicker}
+                >
                     Close
                 </button>
             </div>
