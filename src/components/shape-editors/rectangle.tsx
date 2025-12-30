@@ -1,15 +1,26 @@
-import React from 'react';
+import React from "react";
 
-import { Rectangle } from '../../shapes/rectangle';
-import { DEFAULT_FILL_COLOR_OPTIONS, DEFAULT_STROKE_COLOR_OPTIONS } from '../../constants/colors';
-import { ShapeOptions } from '../../types';
+import { Rectangle } from "../../shapes/rectangle";
+import {
+    DEFAULT_FILL_COLOR_OPTIONS,
+    DEFAULT_STROKE_COLOR_OPTIONS,
+} from "../../constants/colors";
+import { ShapeOptions } from "../../types";
 
-import { ColorPicker } from './helpers/color-picker';
-import { StrokeWidth } from './helpers/stroke-width';
-import { Opacity } from './helpers/opacity';
-import { Edges } from './helpers/edges';
+import { ColorsList } from "./helpers/colors-list";
+import { StrokeWidth } from "./helpers/stroke-width";
+import { Opacity } from "./helpers/opacity";
+import { Edges } from "./helpers/edges";
 
-export const RectangleEditor = ({ rectangle, requestRedraw, updateDefaultOpts }: { rectangle: Rectangle, requestRedraw: () => void, updateDefaultOpts: (newOpts: Partial<ShapeOptions>) => void }) => {
+export const RectangleEditor = ({
+    rectangle,
+    requestRedraw,
+    updateDefaultOpts,
+}: {
+    rectangle: Rectangle;
+    requestRedraw: () => void;
+    updateDefaultOpts: (newOpts: Partial<ShapeOptions>) => void;
+}) => {
     const [strokeWidth, setStrokeWidth] = React.useState(rectangle.strokeWidth);
     const [strokeColor, setStrokeColor] = React.useState(rectangle.strokeColor);
     const [fillColor, setFillColor] = React.useState(rectangle.fillColor);
@@ -21,56 +32,71 @@ export const RectangleEditor = ({ rectangle, requestRedraw, updateDefaultOpts }:
         rectangle.strokeWidth = newWidth;
 
         updateDefaultOpts({
-            strokeWidth: newWidth
-        })
+            strokeWidth: newWidth,
+        });
         requestRedraw();
-    }
+    };
 
     const onStrokeColorChange = (newColor: string) => {
         setStrokeColor(newColor);
         rectangle.strokeColor = newColor;
 
         updateDefaultOpts({
-            strokeColor: newColor
-        })
+            strokeColor: newColor,
+        });
         requestRedraw();
-    }
+    };
 
     const onFillColorChange = (newColor: string) => {
         setFillColor(newColor);
         rectangle.fillColor = newColor;
 
         updateDefaultOpts({
-            fillColor: newColor
-        })
+            fillColor: newColor,
+        });
         requestRedraw();
-    }
+    };
 
     const onOpacityChange = (newVal: number) => {
         setOpacity(newVal);
         rectangle.opacity = newVal;
 
         updateDefaultOpts({
-            opacity: newVal
-        })
+            opacity: newVal,
+        });
         requestRedraw();
-    }
+    };
 
     const onEdgesChange = (newVal: boolean) => {
         setRoundEdges(newVal);
         rectangle.roundEdges = newVal;
 
         updateDefaultOpts({
-            roundEdges: newVal
-        })
+            roundEdges: newVal,
+        });
         requestRedraw();
-    }
+    };
 
-    return <div>
-        <ColorPicker colorOptions={DEFAULT_STROKE_COLOR_OPTIONS} currentColor={strokeColor} label="Color" onColorChange={onStrokeColorChange} />
-        <ColorPicker colorOptions={DEFAULT_FILL_COLOR_OPTIONS} currentColor={fillColor} label="Background" onColorChange={onFillColorChange} />
-        <StrokeWidth currentWidth={strokeWidth} onChange={onStrokeWidthChange} />
-        <Edges rounded={roundEdges} onChange={onEdgesChange} />
-        <Opacity currentValue={opacity} onChange={onOpacityChange} />
-    </div>
-}
+    return (
+        <div>
+            <ColorsList
+                colorOptions={DEFAULT_STROKE_COLOR_OPTIONS}
+                currentColor={strokeColor}
+                label='Color'
+                onColorChange={onStrokeColorChange}
+            />
+            <ColorsList
+                colorOptions={DEFAULT_FILL_COLOR_OPTIONS}
+                currentColor={fillColor}
+                label='Background'
+                onColorChange={onFillColorChange}
+            />
+            <StrokeWidth
+                currentWidth={strokeWidth}
+                onChange={onStrokeWidthChange}
+            />
+            <Edges rounded={roundEdges} onChange={onEdgesChange} />
+            <Opacity currentValue={opacity} onChange={onOpacityChange} />
+        </div>
+    );
+};

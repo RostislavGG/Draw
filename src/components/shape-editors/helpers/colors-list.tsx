@@ -28,10 +28,7 @@ const CheckerSquare = () => {
     );
 };
 
-const ColorSwatch = (props: {
-    color: string;
-    onClick: (color: string) => void;
-}) => {
+const Square = (props: { color: string; onClick: (color: string) => void }) => {
     const getStyle = () => {
         if (props.color !== TRANSPARENT_COLOR) {
             return { backgroundColor: props.color };
@@ -60,7 +57,7 @@ const ColorSwatch = (props: {
     );
 };
 
-export const ColorPicker = (props: {
+export const ColorsList = (props: {
     currentColor: string;
     colorOptions: readonly string[];
     label: string;
@@ -73,16 +70,16 @@ export const ColorPicker = (props: {
     return (
         <div className='buttons-section'>
             <p className='title'>{props.label}</p>
-            <div className='color-picker-row'>
+            <div className='colors-list'>
                 {props.colorOptions.map((opt) => (
-                    <ColorSwatch
+                    <Square
                         key={opt}
                         color={opt}
                         onClick={() => onColorClick(opt)}
                     />
                 ))}
                 <div className='vertical-divider' />
-                <ColorSwatch color={props.currentColor} onClick={() => {}} />
+                <Square color={props.currentColor} onClick={() => {}} />
             </div>
         </div>
     );

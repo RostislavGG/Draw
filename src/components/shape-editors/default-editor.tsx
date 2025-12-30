@@ -5,7 +5,7 @@ import {
 
 import { FontStyle, ShapeOptions, TextAlign } from "../../types";
 
-import { ColorPicker } from "./helpers/color-picker";
+import { ColorsList } from "./helpers/colors-list";
 import { StrokeWidth } from "./helpers/stroke-width";
 import { Opacity } from "./helpers/opacity";
 import { Edges } from "./helpers/edges";
@@ -56,7 +56,7 @@ export const DefaultEditor = ({
 
     if (options.strokeColor != null) {
         res.push(
-            <ColorPicker
+            <ColorsList
                 key='main-color'
                 colorOptions={DEFAULT_STROKE_COLOR_OPTIONS}
                 currentColor={options.strokeColor}
@@ -68,7 +68,7 @@ export const DefaultEditor = ({
 
     if (options.fillColor != null) {
         res.push(
-            <ColorPicker
+            <ColorsList
                 key='fill-color'
                 colorOptions={DEFAULT_FILL_COLOR_OPTIONS}
                 currentColor={options.fillColor}
