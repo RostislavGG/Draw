@@ -1,4 +1,7 @@
+import React from "react";
+
 import { TRANSPARENT_COLOR } from "../../../constants/colors";
+import { ColorPicker } from "./color-picker";
 
 const CheckerSquare = () => {
     return (
@@ -63,7 +66,9 @@ export const ColorsList = (props: {
     label: string;
     onColorChange: (newCol: string) => void;
 }) => {
-    const onColorClick = (newColor: string) => {
+    const [showPicker, setShowPicker] = React.useState(false);
+
+    const changeColor = (newColor: string) => {
         props.onColorChange(newColor);
     };
 
@@ -75,11 +80,21 @@ export const ColorsList = (props: {
                     <Square
                         key={opt}
                         color={opt}
-                        onClick={() => onColorClick(opt)}
+                        onClick={() => changeColor(opt)}
                     />
                 ))}
                 <div className='vertical-divider' />
-                <Square color={props.currentColor} onClick={() => {}} />
+                <Square
+                    color={props.currentColor}
+                    onClick={() => setShowPicker(true)}
+                />
+                {showPicker && (
+                    <ColorPicker
+                        currentColor={props.currentColor}
+                        onColorChange={changeColor}
+                        closePicker={() => setShowPicker(false)}
+                    />
+                )}
             </div>
         </div>
     );
