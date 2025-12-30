@@ -1,0 +1,9 @@
+.modes-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.modes-container-row {
+    display: flex;
+    flex-direction: row;
+}

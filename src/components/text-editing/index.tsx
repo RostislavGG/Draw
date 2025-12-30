@@ -1,16 +1,18 @@
 import * as React from "react";
 import { createPortal } from "react-dom";
 
-import type { Transformer } from "../utils/canvas";
+import type { Transformer } from "../../utils/canvas";
 import {
     cssTextAlign,
     getFontStyle,
     isTransparentLike,
     measureTextWidthPx,
-} from "../utils/typography";
-import { clamp } from "../utils/math";
+} from "../../utils/typography";
+import { clamp } from "../../utils/math";
 
-import { TextData } from "../types";
+import { TextData } from "../../types";
+
+import "./index.css";
 
 type Props = {
     instrumentsEl: React.RefObject<HTMLDivElement | null>;
@@ -20,6 +22,8 @@ type Props = {
     commit: (text: string) => void;
     cancel: () => void;
 };
+
+type CssVars = React.CSSProperties & Record<`--${string}`, string | number>;
 
 export function TextEditor(props: Props) {
     const { instrumentsEl, data, transform, commit, cancel } = props;
@@ -31,21 +35,6 @@ export function TextEditor(props: Props) {
 
     const doneRef = React.useRef(false);
     const [isFocused, setIsFocused] = React.useState(false);
-
-    React.useEffect(() => {
-        const id = "te-caret-style";
-        if (document.getElementById(id)) return;
-
-        const style = document.createElement("style");
-        style.id = id;
-        style.textContent = `
-      @keyframes teBlink {
-        0%, 49% { opacity: 1; }
-        50%, 100% { opacity: 0; }
-      }
-    `;
-        document.head.appendChild(style);
-    }, []);
 
     const doCommit = React.useCallback(
         (text: string) => {
@@ -93,7 +82,6 @@ export function TextEditor(props: Props) {
     const borderRadiusPx = Math.max(2, Math.round(fontPx * 0.25));
 
     const font = `${fontPx}px sans-serif`;
-
     const alignCss = cssTextAlign(textAlign);
 
     const lines = value.split("\n");
@@ -156,94 +144,80 @@ export function TextEditor(props: Props) {
         if (e.key === "Escape") {
             e.preventDefault();
             doCancel();
-            return;
         }
+    };
+
+    const wrapperVars: CssVars = {
+        ["--te-x"]: `${screenX}px`,
+        ["--te-y"]: `${screenY}px`,
+    };
+
+    const boxVars: CssVars = {
+        ["--te-bg-w"]: `${bgW}px`,
+        ["--te-bg-h"]: `${bgH}px`,
+        ["--te-pad"]: `${padPx}px`,
+        ["--te-radius"]: `${borderRadiusPx}px`,
+        ["--te-bg"]: showBg ? bgColor : "transparent",
+        ["--te-box-shadow"]: showBg
+            ? "inset 0 0 0 1px rgba(0,0,0,0.15)"
+            : "none",
+        ["--te-opacity"]: clamp(opacity, 0, 1),
+    };
+
+    const caretVars: CssVars = {
+        ["--te-caret-x"]: `${caretX}px`,
+        ["--te-caret-y"]: `${caretY}px`,
+        ["--te-caret-w"]: `${caretW}px`,
+        ["--te-caret-h"]: `${caretH}px`,
+        ["--te-caret-color"]: color,
+    };
+
+    const textareaVars: CssVars = {
+        ["--te-inner-w"]: `${innerW}px`,
+        ["--te-inner-h"]: `${innerH}px`,
+        ["--te-font"]: font,
+        ["--te-line-height"]: `${lineHeightPx}px`,
+        ["--te-align"]: `${alignCss}`,
+        ["--te-color"]: color,
+        ["--te-baseline-nudge"]: baselineNudgeY ? `${baselineNudgeY}px` : "0px",
+        ["--te-caret-color"]: value.length === 0 ? "transparent" : color,
+    };
+
+    const fontStyleObj = getFontStyle(fontStyle) as React.CSSProperties;
+    const fontStyleVars: CssVars = {
+        ["--te-font-style"]: (fontStyleObj.fontStyle ?? "normal") as string,
+        ["--te-font-weight"]: (fontStyleObj.fontWeight ?? "normal") as
+            | string
+            | number,
+        ["--te-text-decoration"]: (fontStyleObj.textDecoration ??
+            "none") as string,
+        ["--te-font-stretch"]: (fontStyleObj.fontStretch ?? "normal") as string,
     };
 
     const editor = (
         <div
-            style={{
-                position: "fixed",
-                left: 0,
-                top: 0,
-                transform: `translate(${screenX}px, ${screenY}px)`,
-                zIndex: 10_000,
-                pointerEvents: "auto",
-            }}
+            className='te-root'
+            style={wrapperVars}
             onPointerDown={(e) => e.stopPropagation()}
             onPointerMove={(e) => e.stopPropagation()}
             onPointerUp={(e) => e.stopPropagation()}
         >
-            <div
-                style={{
-                    position: "relative",
-                    width: `${bgW}px`,
-                    height: `${bgH}px`,
-                    padding: `${padPx}px`,
-                    boxSizing: "border-box",
-                    borderRadius: `${borderRadiusPx}px`,
-                    background: showBg ? bgColor : "transparent",
-
-                    boxShadow: showBg
-                        ? "inset 0 0 0 1px rgba(0,0,0,0.15)"
-                        : "none",
-
-                    opacity: clamp(opacity, 0, 1),
-                }}
-            >
+            <div className='te-box' style={boxVars}>
                 {isFocused && value.length === 0 && (
-                    <div
-                        style={{
-                            position: "absolute",
-                            left: `${caretX}px`,
-                            top: `${caretY}px`,
-                            width: `${caretW}px`,
-                            height: `${caretH}px`,
-                            background: color,
-                            animation: "teBlink 1s steps(1, end) infinite",
-                            pointerEvents: "none",
-                        }}
-                    />
+                    <div className='te-caret' style={caretVars} />
                 )}
 
                 <textarea
                     ref={taRef}
                     aria-label='Text editor'
+                    className='te-textarea'
+                    style={{ ...textareaVars, ...fontStyleVars }}
                     value={value}
                     onChange={(e) => setValue(e.target.value)}
                     onKeyDown={onKeyDown}
                     onFocus={() => setIsFocused(true)}
                     onBlur={() => setIsFocused(false)}
                     spellCheck={false}
-                    style={{
-                        display: "block",
-                        width: `${innerW}px`,
-                        height: `${innerH}px`,
-                        resize: "none",
-                        overflow: "hidden",
-                        outline: "none",
-                        margin: 0,
-                        padding: 0,
-                        border: "none",
-                        background: "transparent",
-                        boxSizing: "content-box",
-
-                        font,
-                        lineHeight: `${lineHeightPx}px`,
-                        textAlign: alignCss,
-                        color,
-
-                        whiteSpace: "pre-wrap",
-                        wordBreak: "break-word",
-
-                        transform: baselineNudgeY
-                            ? `translateY(-${baselineNudgeY}px)`
-                            : undefined,
-
-                        caretColor: value.length === 0 ? "transparent" : color,
-
-                        ...getFontStyle(fontStyle),
-                    }}
                 />
             </div>
         </div>

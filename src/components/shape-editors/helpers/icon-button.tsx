@@ -1,5 +1,7 @@
 import React from "react";
 
+import "./styles.css";
+
 type AnyIcon = React.ComponentType<{ className?: string }>;
 
 export const IconButton = (props: {

@@ -10,6 +10,8 @@ import {
 } from "../../../utils/colors";
 import { clamp } from "../../../utils/math";
 
+import "./styles.css";
+
 type ColorPickerProps = {
     currentColor: string;
     closePicker: () => void;

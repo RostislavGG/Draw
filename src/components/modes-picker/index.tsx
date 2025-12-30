@@ -9,9 +9,11 @@ import { HiOutlineArrowLongRight } from "react-icons/hi2";
 import { IoTextSharp } from "react-icons/io5";
 import { PiEraser } from "react-icons/pi";
 
-import { Modes } from "../types";
+import { Modes } from "../../types";
 
-import { IconButton } from "./shape-editors/helpers/icon-button";
+import { IconButton } from "../shape-editors/helpers/icon-button";
+
+import "./index.css";
 
 export const ModesPicker = (props: {
     currentMode: Modes;

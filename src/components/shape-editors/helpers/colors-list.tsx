@@ -1,7 +1,10 @@
 import React from "react";
 
 import { TRANSPARENT_COLOR } from "../../../constants/colors";
+
 import { ColorPicker } from "./color-picker";
+
+import "./styles.css";
 
 const CheckerSquare = () => {
     return (

@@ -1,0 +1,13 @@
+.container {
+    position: fixed; 
+    inset: 0; 
+    overflow: hidden;
+}
+
+.canvas {
+    position: absolute;
+    inset: 0;
+    background: transparent;
+    z-index: 1;
+    touch-action: none;
+}

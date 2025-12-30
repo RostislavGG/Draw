@@ -7,6 +7,8 @@ import {
     StrokeSmallIcon,
 } from "./stroke-icons";
 
+import "./styles.css";
+
 export const StrokeWidth = (props: {
     currentWidth: number;
     onChange: (newVal: number) => void;

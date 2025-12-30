@@ -3,9 +3,11 @@ import { RiScreenshot2Line } from "react-icons/ri";
 import { CiVideoOn } from "react-icons/ci";
 import { LuScreenShare } from "react-icons/lu";
 
-import { Modes } from "../types";
+import { Modes } from "../../types";
 
-import { IconButton } from "./shape-editors/helpers/icon-button";
+import { IconButton } from "../shape-editors/helpers/icon-button";
+
+import "./index.css";
 
 export const Actions = (props: {
     currentMode: Modes;

@@ -1,27 +1,27 @@
-import { Arrow } from "../shapes/arrow";
-import { Shape } from "../shapes/base";
-import { Elipse } from "../shapes/elipse";
-import { Freehand } from "../shapes/freehand";
-import { Line } from "../shapes/line";
-import { Rectangle } from "../shapes/rectangle";
-import { Typography } from "../shapes/typography";
+import { Arrow } from "../../shapes/arrow";
+import { Shape } from "../../shapes/base";
+import { Elipse } from "../../shapes/elipse";
+import { Freehand } from "../../shapes/freehand";
+import { Line } from "../../shapes/line";
+import { Rectangle } from "../../shapes/rectangle";
+import { Typography } from "../../shapes/typography";
 
-import { Modes, ShapeOptions } from "../types";
+import { Modes, ShapeOptions } from "../../types";
 
-import { ArrowEditor } from "./shape-editors/arrow";
-import { ElipseEditor } from "./shape-editors/elipse";
-import { FreehandEditor } from "./shape-editors/freehand";
-import { LineEditor } from "./shape-editors/line";
-import { RectangleEditor } from "./shape-editors/rectangle";
-import { TypographyEditor } from "./shape-editors/text";
+import { ArrowEditor } from "../shape-editors/arrow";
+import { ElipseEditor } from "../shape-editors/elipse";
+import { FreehandEditor } from "../shape-editors/freehand";
+import { LineEditor } from "../shape-editors/line";
+import { RectangleEditor } from "../shape-editors/rectangle";
+import { TypographyEditor } from "../shape-editors/text";
 
-import { DefaultEditor } from "./shape-editors/default-editor";
+import { DefaultEditor } from "../shape-editors/default-editor";
 
-import { ModesPicker } from "./modes-picker";
-import { Actions } from "./actions";
-import { Divider } from "./divider";
+import { ModesPicker } from "../modes-picker";
+import { Actions } from "../actions";
+import { Divider } from "../divider";
 
-import "./styles.css";
+import "./index.css";
 
 export const Instruments = ({
     isOpen,

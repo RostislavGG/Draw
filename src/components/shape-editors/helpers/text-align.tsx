@@ -6,6 +6,8 @@ import { TextAlign as TextAlignEnum } from "../../../types";
 
 import { IconButton } from "./icon-button";
 
+import "./styles.css";
+
 export const TextAlign = (props: {
     currentAlign: TextAlignEnum;
     onChange: (newVal: TextAlignEnum) => void;
