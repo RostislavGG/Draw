@@ -38,6 +38,8 @@ import {
     TrailPoint,
 } from "./types";
 
+import "./App.css";
+
 function App() {
     const canvasRef = React.useRef<HTMLCanvasElement>(null);
     const instrumentsWrapRef = React.useRef<HTMLDivElement>(null);
@@ -793,18 +795,12 @@ function App() {
 
     return (
         <React.Fragment>
-            <div style={{ position: "fixed", inset: 0, overflow: "hidden" }}>
+            <div className='container'>
                 <canvas
                     ref={canvasRef}
+                    className='canvas'
                     width={viewport.w}
                     height={viewport.h}
-                    style={{
-                        position: "absolute",
-                        inset: 0,
-                        background: "transparent",
-                        zIndex: 1,
-                        touchAction: "none",
-                    }}
                     onPointerDown={handlePointerDown}
                     onPointerUp={handlePointerUp}
                     onPointerMove={handlePointerMove}
