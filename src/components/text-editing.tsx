@@ -8,6 +8,7 @@ import {
     isTransparentLike,
     measureTextWidthPx,
 } from "../utils/typography";
+import { clamp } from "../utils/math";
 
 import { TextData } from "../types";
 
@@ -19,9 +20,6 @@ type Props = {
     commit: (text: string) => void;
     cancel: () => void;
 };
-
-const clamp = (v: number, min: number, max: number) =>
-    Math.max(min, Math.min(max, v));
 
 export function TextEditor(props: Props) {
     const { instrumentsEl, data, transform, commit, cancel } = props;

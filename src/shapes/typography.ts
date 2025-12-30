@@ -1,5 +1,8 @@
-import { Bounds, Modes, TextAlign, FontStyle, ResizeHandle } from "../types";
+import { clamp } from "../utils/math";
 import { rectBoundsFromHandleDrag } from "../utils/resize";
+
+import { Bounds, Modes, TextAlign, FontStyle, ResizeHandle } from "../types";
+
 import { Shape } from "./base";
 
 type ResizeSnapshot = {
@@ -20,9 +23,6 @@ type Measure = {
     bgW: number;
     bgH: number;
 };
-
-const clamp = (v: number, min: number, max: number) =>
-    Math.max(min, Math.min(max, v));
 
 export class Typography extends Shape {
     type: Modes.Typography;

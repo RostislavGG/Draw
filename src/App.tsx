@@ -47,7 +47,7 @@ function App() {
     const [textEditingData, setTextEditingData] =
         React.useState<TextData | null>(null);
     const textEditExitTime = React.useRef(Date.now());
-    const lastClickOnSelectedText = React.useRef(Date.now());
+    const lastClickOnTextShape = React.useRef(Date.now());
 
     const isMouseDown = React.useRef(false);
     const rafId = React.useRef<number | null>(null);
@@ -412,7 +412,7 @@ function App() {
 
                 if (selected.type === Modes.Typography) {
                     const now = Date.now();
-                    if (now - lastClickOnSelectedText.current < 250) {
+                    if (now - lastClickOnTextShape.current < 250) {
                         shapesList.current = shapesList.current.filter(
                             (s) => s.id !== selected.id
                         );
@@ -440,9 +440,11 @@ function App() {
                         }));
                         return;
                     } else {
-                        lastClickOnSelectedText.current = now;
+                        lastClickOnTextShape.current = now;
                     }
                 }
+            } else {
+                lastClickOnTextShape.current = Date.now();
             }
 
             if (hoveredShape.current) {

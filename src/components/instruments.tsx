@@ -193,6 +193,7 @@ export const Instruments = ({
     return (
         <div
             className={`instruments-panel ${isOpen ? "is-open" : "is-closed"}`}
+            id='instruments'
         >
             <ModesPicker changeMode={changeMode} currentMode={currentMode} />
             <Divider />
