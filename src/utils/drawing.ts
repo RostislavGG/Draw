@@ -1,5 +1,3 @@
-import { getStroke } from "perfect-freehand";
-
 import { Shape } from "../shapes/base";
 
 import { Modes, TrailPoint } from "../types";
@@ -7,22 +5,7 @@ import { Modes, TrailPoint } from "../types";
 import { Transformer, worldToScreen } from "./canvas";
 import { getHandlesForBounds, HANDLE_SIZE_PX } from "./selection";
 import { isShapeDrawingMode } from "./cursor";
-
-export const getStrokeString = (stroke: number[][]) => {
-    if (!stroke.length) return "";
-
-    const d = stroke.reduce(
-        (acc, [x0, y0], i, arr) => {
-            const [x1, y1] = arr[(i + 1) % arr.length];
-            acc.push(x0, y0, (x0 + x1) / 2, (y0 + y1) / 2);
-            return acc;
-        },
-        ["M", ...stroke[0], "Q"]
-    );
-
-    d.push("Z");
-    return d.join(" ");
-};
+import { drawEraserTrail } from "./erasing";
 
 const clearBoard = (
     ctx: CanvasRenderingContext2D,
@@ -42,36 +25,6 @@ const clearBoard = (
         transformer.x * dpr,
         transformer.y * dpr
     );
-};
-
-const drawEraserTrail = (
-    ctx: CanvasRenderingContext2D,
-    trail: TrailPoint[],
-    dpr: number
-) => {
-    if (trail.length < 2) {
-        return;
-    }
-
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-    const myPath = getStroke(
-        trail.map((t) => [t.x, t.y]),
-        {
-            size: 14,
-        }
-    );
-
-    const pathData = getStrokeString(myPath);
-    const path = new Path2D(pathData);
-
-    ctx.save();
-
-    ctx.beginPath();
-    ctx.fillStyle = "#c0c0c0ff";
-    ctx.fill(path);
-
-    ctx.restore();
 };
 
 const drawHandle = (

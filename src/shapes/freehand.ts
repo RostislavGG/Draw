@@ -2,7 +2,7 @@ import { getStroke } from "perfect-freehand";
 
 import { STROKE_WIDTHS } from "../constants/stroke";
 
-import { getStrokeString } from "../utils/drawing";
+import { getStrokeString } from "../utils/freehand";
 import { drawLaserFill } from "../utils/freehand-colors";
 import { rectBoundsFromHandleDrag } from "../utils/resize";
 

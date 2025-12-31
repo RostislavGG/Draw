@@ -9,6 +9,7 @@ import {
 import { DEFAULT_INSTRUMENTS_STATE } from "./constants/state";
 
 import { Typography } from "./shapes/typography";
+import { Shape } from "./shapes/base";
 
 import { createShape, createTextShape } from "./utils/shapes";
 import { deriveMode } from "./utils/mode";
@@ -27,8 +28,6 @@ import { updateCanvasCursor } from "./utils/cursor";
 
 import { Instruments } from "./components/instruments";
 import { TextEditor } from "./components/text-editing";
-
-import { Shape } from "./shapes/base";
 
 import {
     Modes,
