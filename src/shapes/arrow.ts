@@ -42,7 +42,8 @@ export class Arrow extends Shape {
             return;
         }
 
-        const arrowHeadLength = 40;
+        const shapeLength = Math.hypot(this.x1 - this.x0, this.y1 - this.y0);
+        const arrowHeadLength = Math.min(40, shapeLength / 3);
 
         const angle = Math.atan2(this.y1 - this.y0, this.x1 - this.x0);
 
