@@ -60,7 +60,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = (props) => {
         return () => {
             window.removeEventListener("mousedown", mouseDownHandler);
         };
-    }, []);
+    }, [props.closePicker]);
 
     React.useLayoutEffect(() => {
         const instrumentsElement = document.querySelector("#instruments");
@@ -189,13 +189,10 @@ export const ColorPicker: React.FC<ColorPickerProps> = (props) => {
             const s = rect.width === 0 ? 0 : x / rect.width;
             const v = rect.height === 0 ? 0 : 1 - y / rect.height;
 
-            setHsv((prev) => {
-                const next = { ...prev, s, v };
-                emitColor(next);
-                return next;
-            });
+            setHsv({ ...hsv, s, v });
+            emitColor({ ...hsv, s, v });
         },
-        [emitColor]
+        [emitColor, hsv]
     );
 
     const setHueFromPointer = React.useCallback(
@@ -207,13 +204,10 @@ export const ColorPicker: React.FC<ColorPickerProps> = (props) => {
             const x = clamp(clientX - rect.left, 0, rect.width);
             const h = (rect.width === 0 ? 0 : (x / rect.width) * 360) % 360;
 
-            setHsv((prev) => {
-                const next = { ...prev, h };
-                emitColor(next);
-                return next;
-            });
+            setHsv({ ...hsv, h });
+            emitColor({ ...hsv, h });
         },
-        [emitColor]
+        [emitColor, hsv]
     );
 
     const onSVPointerDown: React.PointerEventHandler<HTMLCanvasElement> = (

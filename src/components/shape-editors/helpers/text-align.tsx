@@ -14,7 +14,7 @@ export const TextAlign = (props: {
 }) => {
     return (
         <div className='buttons-section'>
-            <p className='title'>Stroke Width</p>
+            <p className='title'>Text Align</p>
             <div className='modes-container-row'>
                 <IconButton
                     selected={props.currentAlign === TextAlignEnum.Left}

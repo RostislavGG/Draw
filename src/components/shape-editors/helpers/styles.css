@@ -9,9 +9,10 @@
 }
 
 .title {
+    margin: 0px;
+    margin-bottom: 8px;
     font-size: 14px;
     color: rgb(95, 95, 95);
-    margin-bottom: 8px;
 }
 
 .icon-button {
@@ -106,10 +107,15 @@
     display: grid;
     grid-auto-flow: column;
     grid-column-gap: 4px;
+    margin-bottom: 16px;
+}
+
+.buttons-section {
+    margin-bottom: 8px;
 }
 
 .vertical-divider {
-    border-left: 1px solid rgb(184, 183, 183);
+    border-left: 1px solid rgb(226, 226, 226);
     margin: 0px 8px;
 }
 

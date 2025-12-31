@@ -8,7 +8,7 @@ import { FONT_SIZES } from "./font";
 import { STROKE_WIDTHS } from "./stroke";
 
 export const DEFAULT_INSTRUMENTS_STATE: ShapeOptions = {
-    strokeColor: DEFAULT_STROKE_COLOR_OPTIONS[0],
+    strokeColor: DEFAULT_STROKE_COLOR_OPTIONS[1],
     fillColor: DEFAULT_FILL_COLOR_OPTIONS[0],
     strokeWidth: STROKE_WIDTHS.MEDIUM,
     fontSize: FONT_SIZES.MEDIUM,
