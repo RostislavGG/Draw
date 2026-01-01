@@ -631,7 +631,11 @@ function App() {
 
             let hover: Shape | null = null;
             for (let i = shapesList.current.length - 1; i >= 0; i--) {
-                if (shapesList.current[i].hitTest(x, y, canvasRef.current)) {
+                if (
+                    shapesList.current[i].hitTest(x, y, canvasRef.current, {
+                        hitSlop: 8 / viewportTransform.current.scale,
+                    })
+                ) {
                     hover = shapesList.current[i];
                     break;
                 }

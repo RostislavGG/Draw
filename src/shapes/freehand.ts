@@ -6,7 +6,7 @@ import { getStrokeString } from "../utils/freehand";
 import { drawLaserFill } from "../utils/freehand-colors";
 import { rectBoundsFromHandleDrag } from "../utils/resize";
 
-import { Bounds, Modes, ResizeCtx } from "../types";
+import { Bounds, HitTestOptions, Modes, ResizeCtx } from "../types";
 
 import { Shape } from "./base";
 
@@ -68,20 +68,32 @@ export class Freehand extends Shape {
         });
     }
 
-    hitTest(x: number, y: number, canvas: HTMLCanvasElement): boolean {
-        if (!this.path) {
-            return false;
-        }
+    hitTest(
+        x: number,
+        y: number,
+        canvas: HTMLCanvasElement,
+        opts: HitTestOptions
+    ): boolean {
+        if (!this.path) return false;
 
         const ctx = canvas.getContext("2d");
-        if (!ctx) {
-            return false;
+        if (!ctx) return false;
+
+        const hitSlop = opts.hitSlop ?? 0;
+
+        if (ctx.isPointInPath(this.path, x, y)) return true;
+
+        if (hitSlop > 0) {
+            ctx.save();
+            ctx.lineJoin = "round";
+            ctx.lineCap = "round";
+            ctx.lineWidth = hitSlop * 2;
+            const hit = ctx.isPointInStroke(this.path, x, y);
+            ctx.restore();
+            return hit;
         }
 
-        return (
-            ctx.isPointInStroke(this.path, x, y) ||
-            ctx.isPointInPath(this.path, x, y)
-        );
+        return false;
     }
 
     updateShape(x: number, y: number): void {

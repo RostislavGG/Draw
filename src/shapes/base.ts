@@ -1,4 +1,4 @@
-import { Bounds, Modes, ResizeCtx } from "../types";
+import { Bounds, HitTestOptions, Modes, ResizeCtx } from "../types";
 
 export abstract class Shape {
     readonly id: string;
@@ -12,7 +12,12 @@ export abstract class Shape {
 
     abstract draw(canvas: HTMLCanvasElement): void;
 
-    abstract hitTest(x: number, y: number, canvas: HTMLCanvasElement): boolean;
+    abstract hitTest(
+        x: number,
+        y: number,
+        canvas: HTMLCanvasElement,
+        options: HitTestOptions
+    ): boolean;
 
     abstract updateShape(x: number, y: number): void;
 

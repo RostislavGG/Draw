@@ -103,3 +103,7 @@ export type ResizeCtx = {
     startBounds: Bounds;
     startSnapshot: any;
 };
+
+export type HitTestOptions = {
+    hitSlop?: number;
+};

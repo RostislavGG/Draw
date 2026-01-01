@@ -32,7 +32,11 @@ export const eraseAlongSegment = (
             const shape = shapes[j];
             if (shape.deletionScheduled) continue;
 
-            if (shape.hitTest(sx, sy, canvas)) {
+            if (
+                shape.hitTest(sx, sy, canvas, {
+                    hitSlop: 8 / viewportTransform.scale,
+                })
+            ) {
                 shape.deletionScheduled = true;
             }
         }

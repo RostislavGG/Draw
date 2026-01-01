@@ -1,4 +1,4 @@
-import { Bounds, Modes, ResizeCtx } from "../types";
+import { Bounds, HitTestOptions, Modes, ResizeCtx } from "../types";
 import { Shape } from "./base";
 
 export class Line extends Shape {
@@ -63,7 +63,12 @@ export class Line extends Shape {
         this.path = newPath;
     }
 
-    hitTest(x: number, y: number, canvas: HTMLCanvasElement): boolean {
+    hitTest(
+        x: number,
+        y: number,
+        canvas: HTMLCanvasElement,
+        options: HitTestOptions
+    ): boolean {
         if (!this.path) {
             return false;
         }
@@ -73,7 +78,9 @@ export class Line extends Shape {
             return false;
         }
 
-        ctx.lineWidth = this.strokeWidth;
+        const hitSlop = options.hitSlop ?? 0;
+
+        ctx.lineWidth = this.strokeWidth + hitSlop * 2;
         ctx.lineCap = "round";
 
         return (
