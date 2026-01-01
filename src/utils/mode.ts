@@ -31,6 +31,9 @@ export const deriveMode = (key: string) => {
     if (key === "x") {
         return Modes.Screenshot;
     }
+    if (key === "z") {
+        return Modes.Laser;
+    }
 
     return null;
 };

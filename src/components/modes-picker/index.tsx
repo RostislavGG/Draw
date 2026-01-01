@@ -8,6 +8,7 @@ import { BsDashLg } from "react-icons/bs";
 import { HiOutlineArrowLongRight } from "react-icons/hi2";
 import { IoTextSharp } from "react-icons/io5";
 import { PiEraser } from "react-icons/pi";
+import { GiLaserBurst } from "react-icons/gi";
 
 import { Modes } from "../../types";
 
@@ -52,6 +53,12 @@ export const ModesPicker = (props: {
                     tooltip='Text — T'
                     onClick={() => props.changeMode(Modes.Typography)}
                     Icon={IoTextSharp}
+                />
+                <IconButton
+                    selected={props.currentMode === Modes.Laser}
+                    tooltip='Laser Pointer — Z'
+                    onClick={() => props.changeMode(Modes.Laser)}
+                    Icon={GiLaserBurst}
                 />
             </div>
             <div className='modes-container-row'>

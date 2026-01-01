@@ -117,6 +117,17 @@ export const Instruments = ({
                     />
                 );
             }
+            if (currentMode === Modes.Laser) {
+                return (
+                    <DefaultEditor
+                        key={currentMode}
+                        options={{
+                            strokeColor: shapeOptions.strokeColor,
+                        }}
+                        onChange={handleOptionsChange}
+                    />
+                );
+            }
 
             return;
         }

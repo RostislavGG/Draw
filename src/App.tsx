@@ -25,6 +25,7 @@ import {
 } from "./utils/selection";
 import { getResizeAnchorWorld } from "./utils/resize";
 import { updateCanvasCursor } from "./utils/cursor";
+import { pruneLaserTrail } from "./utils/laser";
 
 import { Instruments } from "./components/instruments";
 import { TextEditor } from "./components/text-editing";
@@ -57,6 +58,7 @@ function App() {
     const tempShape = React.useRef<Shape>(null);
     const shapesList = React.useRef<Shape[]>([]);
     const eraserTrail = React.useRef<TrailPoint[]>([]);
+    const laserTrail = React.useRef<TrailPoint[]>([]);
     const cursorPos = React.useRef<{ x: number; y: number }>({
         x: -10,
         y: -10,
@@ -194,6 +196,7 @@ function App() {
                 shapesList.current = [];
                 hoveredShape.current = null;
                 eraserTrail.current = [];
+                laserTrail.current = [];
                 changeSelectedShape(null);
                 cursorPos.current = { x: 0, y: 0 };
 
@@ -307,6 +310,7 @@ function App() {
 
             const now = Date.now();
             pruneTrail(eraserTrail.current, now);
+            pruneLaserTrail(laserTrail.current, now);
 
             redraw(
                 canvasRef.current,
@@ -315,6 +319,8 @@ function App() {
                 tempShape.current,
                 selectedShapeRef.current,
                 eraserTrail.current,
+                laserTrail.current,
+                shapeOptions.strokeColor,
                 dprRef.current,
                 mode,
                 cursorPos.current,
@@ -323,7 +329,12 @@ function App() {
                 textEditingData != null
             );
 
-            if (eraserTrail.current.length > 0) requestRedraw();
+            if (
+                eraserTrail.current.length > 0 ||
+                laserTrail.current.length > 0
+            ) {
+                requestRedraw();
+            }
         });
     };
 
@@ -339,6 +350,16 @@ function App() {
                 { x: event.clientX, y: event.clientY, t: now },
             ];
             requestRedraw();
+            return;
+        }
+
+        if (mode === Modes.Laser) {
+            const now = Date.now();
+            laserTrail.current = [
+                { x: event.clientX, y: event.clientY, t: now },
+            ];
+            requestRedraw();
+            syncCursor();
             return;
         }
 
@@ -485,6 +506,12 @@ function App() {
 
         eraserTrail.current = [];
 
+        if (mode === Modes.Laser) {
+            requestRedraw();
+            syncCursor();
+            return;
+        }
+
         if (mode === Modes.Select) {
             selectGesture.current = { kind: "none" };
             syncCursor();
@@ -587,6 +614,19 @@ function App() {
                 );
             }
 
+            requestRedraw();
+            syncCursor();
+            return;
+        }
+
+        if (mode === Modes.Laser && isMouseDown.current) {
+            const now = Date.now();
+            laserTrail.current.push({
+                x: event.clientX,
+                y: event.clientY,
+                t: now,
+            });
+            pruneLaserTrail(laserTrail.current, now);
             requestRedraw();
             syncCursor();
             return;

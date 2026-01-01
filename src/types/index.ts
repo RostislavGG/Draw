@@ -7,6 +7,7 @@ export enum Modes {
     Line,
     Typography,
     Eraser,
+    Laser,
     Forward,
     Screenshot,
 }

@@ -6,6 +6,7 @@ import { Transformer, worldToScreen } from "./canvas";
 import { getHandlesForBounds, HANDLE_SIZE_PX } from "./selection";
 import { isShapeDrawingMode, makeAreaGradient } from "./cursor";
 import { drawEraserTrail } from "./erasing";
+import { drawLaserTrail } from "./laser";
 
 const clearBoard = (
     ctx: CanvasRenderingContext2D,
@@ -106,7 +107,7 @@ const drawSelectionAroundShape = (
     ctx.restore();
 };
 
-const drawCrosshairCursor = (
+const drawCustomCursor = (
     ctx: CanvasRenderingContext2D,
     transform: Transformer,
     dpr: number,
@@ -134,6 +135,14 @@ const drawCrosshairCursor = (
         ctx.fill();
         ctx.strokeStyle = "#000000";
         ctx.stroke();
+        return;
+    }
+
+    if (mode === Modes.Laser) {
+        ctx.beginPath();
+        ctx.ellipse(s.x, s.y, 3, 3, 0, 0, Math.PI * 2);
+        ctx.fillStyle = color;
+        ctx.fill();
         return;
     }
 
@@ -190,6 +199,8 @@ export const redraw = (
     currentShape: Shape | null,
     selectedShape: Shape | null,
     eraserTrail: TrailPoint[],
+    laserTrail: TrailPoint[],
+    laserColor: string,
     dpr: number,
     mode: Modes,
     cursorPos: { x: number; y: number },
@@ -217,7 +228,11 @@ export const redraw = (
         drawEraserTrail(ctx, eraserTrail, dpr);
     }
 
-    drawCrosshairCursor(
+    if (laserTrail.length > 0) {
+        drawLaserTrail(ctx, laserTrail, dpr, laserColor, Date.now());
+    }
+
+    drawCustomCursor(
         ctx,
         transformer,
         dpr,
