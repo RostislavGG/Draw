@@ -1,6 +1,5 @@
 import { IoSettingsOutline } from "react-icons/io5";
 import { RiScreenshot2Line } from "react-icons/ri";
-import { CiVideoOn } from "react-icons/ci";
 import { LuScreenShare } from "react-icons/lu";
 
 import { Modes } from "../../types";
@@ -19,9 +18,6 @@ export const Actions = (props: {
     const onScreenshotClick = () => {
         props.changeMode(Modes.Screenshot);
     };
-    const onVideoClick = () => {
-        props.changeMode(Modes.Video);
-    };
     const onSettingsClick = () => {};
 
     return (
@@ -37,12 +33,6 @@ export const Actions = (props: {
                 onClick={onScreenshotClick}
                 Icon={RiScreenshot2Line}
                 tooltip='Screenshot — X'
-            />
-            <IconButton
-                selected={props.currentMode === Modes.Video}
-                onClick={onVideoClick}
-                Icon={CiVideoOn}
-                tooltip='Record Video — V'
             />
             <IconButton
                 selected={false}

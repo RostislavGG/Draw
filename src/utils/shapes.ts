@@ -80,7 +80,7 @@ export const createShape = (
         );
     }
 
-    if (mode === Modes.Screenshot || mode === Modes.Video) {
+    if (mode === Modes.Screenshot) {
         return new Area(mode, uuidv4(), x, y);
     }
 

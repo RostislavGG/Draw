@@ -2,19 +2,14 @@ import { Bounds, Modes } from "../types";
 import { Shape } from "./base";
 
 export class Area extends Shape {
-    type: Modes.Screenshot | Modes.Video;
+    type: Modes.Screenshot;
 
     x0: number;
     y0: number;
     x1: number;
     y1: number;
 
-    constructor(
-        type: Modes.Screenshot | Modes.Video,
-        id: string,
-        x: number,
-        y: number
-    ) {
+    constructor(type: Modes.Screenshot, id: string, x: number, y: number) {
         super(id);
         this.type = type;
 

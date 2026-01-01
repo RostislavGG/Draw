@@ -28,9 +28,6 @@ export const deriveMode = (key: string) => {
     if (key === "f") {
         return Modes.Forward;
     }
-    if (key === "v") {
-        return Modes.Video;
-    }
     if (key === "x") {
         return Modes.Screenshot;
     }

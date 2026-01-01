@@ -339,7 +339,6 @@ function App() {
                 { x: event.clientX, y: event.clientY, t: now },
             ];
             requestRedraw();
-            syncCursor();
             return;
         }
 
@@ -501,7 +500,7 @@ function App() {
             return;
         }
 
-        if (mode === Modes.Screenshot || mode === Modes.Video) {
+        if (mode === Modes.Screenshot) {
             tempShape.current = null;
             requestRedraw();
             syncCursor();

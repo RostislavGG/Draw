@@ -18,7 +18,6 @@ export type UpdateCursorArgs = {
 const NON_DRAWING_MODES = new Set<Modes>([
     Modes.Select,
     Modes.Screenshot,
-    Modes.Video,
     Modes.Forward,
 ]);
 
