@@ -4,7 +4,7 @@ import { Modes, TrailPoint } from "../types";
 
 import { Transformer, worldToScreen } from "./canvas";
 import { getHandlesForBounds, HANDLE_SIZE_PX } from "./selection";
-import { isShapeDrawingMode } from "./cursor";
+import { isShapeDrawingMode, makeAreaGradient } from "./cursor";
 import { drawEraserTrail } from "./erasing";
 
 const clearBoard = (
@@ -138,6 +138,39 @@ const drawCrosshairCursor = (
     }
 
     const L = 10;
+
+    if (mode === Modes.Screenshot) {
+        const grad = makeAreaGradient(ctx, s.x - L, s.y - L, s.x + L, s.y + L);
+
+        const drawCross = () => {
+            ctx.beginPath();
+            ctx.moveTo(s.x - L, s.y);
+            ctx.lineTo(s.x + L, s.y);
+            ctx.moveTo(s.x, s.y - L);
+            ctx.lineTo(s.x, s.y + L);
+            ctx.stroke();
+        };
+
+        ctx.save();
+
+        ctx.lineCap = "round";
+
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = "rgba(0,0,0,0.55)";
+        drawCross();
+
+        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = "rgba(255,255,255,0.65)";
+        drawCross();
+
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = grad;
+        drawCross();
+
+        ctx.restore();
+        return;
+    }
+
     ctx.save();
     ctx.strokeStyle = color;
     ctx.lineWidth = 2;

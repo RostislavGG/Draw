@@ -40,17 +40,15 @@ export class Area extends Shape {
 
         ctx.save();
 
-        // Smoother dash than [5,5,5,5]
+        const minX = Math.min(this.x0, this.x1);
+        const minY = Math.min(this.y0, this.y1);
+        const maxX = Math.max(this.x0, this.x1);
+        const maxY = Math.max(this.y0, this.y1);
+
         ctx.setLineDash([10, 6]);
         ctx.lineDashOffset = 0;
 
-        // Build a multi-color gradient stroke (works regardless of background)
-        const grad = ctx.createLinearGradient(
-            this.x0,
-            this.y0,
-            this.x1 - this.x0,
-            this.y1 - this.y0
-        );
+        const grad = ctx.createLinearGradient(minX, minY, maxX, maxY);
         grad.addColorStop(0.0, "rgba(255, 0, 102, 0.95)");
         grad.addColorStop(0.2, "rgba(255, 153, 0, 0.95)");
         grad.addColorStop(0.4, "rgba(255, 255, 0, 0.95)");
@@ -59,7 +57,7 @@ export class Area extends Shape {
         grad.addColorStop(1.0, "rgba(255, 0, 200, 0.95)");
 
         ctx.beginPath();
-        ctx.rect(this.x0, this.y0, this.x1 - this.x0, this.y1 - this.y0);
+        ctx.rect(minX, minY, maxX - minX, maxY - minY);
 
         ctx.lineWidth = 4;
         ctx.strokeStyle = "rgba(0,0,0,0.55)";
